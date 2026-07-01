@@ -18,8 +18,11 @@
 		A20000000000000000000009 /* ConnectionRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000010 /* ConnectionRepository.swift */; };
 		A20000000000000000000010 /* HostListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000011 /* HostListViewModel.swift */; };
 		A20000000000000000000011 /* ConnectionEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000012 /* ConnectionEditorView.swift */; };
+		A20000000000000000000012 /* VaultUnlockClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000013 /* VaultUnlockClient.swift */; };
+		A20000000000000000000013 /* AppLockViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000014 /* AppLockViewModel.swift */; };
 		B20000000000000000000001 /* AbyssalThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* AbyssalThemeTests.swift */; };
 		B20000000000000000000002 /* ConnectionRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* ConnectionRepositoryTests.swift */; };
+		B20000000000000000000003 /* AppLockViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* AppLockViewModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,9 +48,12 @@
 		A10000000000000000000010 /* ConnectionRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionRepository.swift; sourceTree = "<group>"; };
 		A10000000000000000000011 /* HostListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostListViewModel.swift; sourceTree = "<group>"; };
 		A10000000000000000000012 /* ConnectionEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionEditorView.swift; sourceTree = "<group>"; };
+		A10000000000000000000013 /* VaultUnlockClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultUnlockClient.swift; sourceTree = "<group>"; };
+		A10000000000000000000014 /* AppLockViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockViewModel.swift; sourceTree = "<group>"; };
 		B10000000000000000000001 /* AbyssalThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbyssalThemeTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000002 /* TetherTTYTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TetherTTYTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B10000000000000000000003 /* ConnectionRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionRepositoryTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000004 /* AppLockViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockViewModelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -94,6 +100,7 @@
 			children = (
 				A10000000000000000000001 /* TetherTTYApp.swift */,
 				A30000000000000000000002 /* Models */,
+				A30000000000000000000007 /* Security */,
 				A30000000000000000000005 /* Persistence */,
 				A30000000000000000000006 /* ViewModels */,
 				A30000000000000000000003 /* Theme */,
@@ -124,9 +131,18 @@
 		A30000000000000000000006 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				A10000000000000000000014 /* AppLockViewModel.swift */,
 				A10000000000000000000011 /* HostListViewModel.swift */,
 			);
 			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		A30000000000000000000007 /* Security */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000013 /* VaultUnlockClient.swift */,
+			);
+			path = Security;
 			sourceTree = "<group>";
 		};
 		A30000000000000000000003 /* Theme */ = {
@@ -152,6 +168,7 @@
 			children = (
 				B10000000000000000000001 /* AbyssalThemeTests.swift */,
 				B10000000000000000000003 /* ConnectionRepositoryTests.swift */,
+				B10000000000000000000004 /* AppLockViewModelTests.swift */,
 			);
 			path = TetherTTYTests;
 			sourceTree = "<group>";
@@ -261,6 +278,8 @@
 				A20000000000000000000007 /* Connection.swift in Sources */,
 				A20000000000000000000008 /* CredentialStore.swift in Sources */,
 				A20000000000000000000009 /* ConnectionRepository.swift in Sources */,
+				A20000000000000000000012 /* VaultUnlockClient.swift in Sources */,
+				A20000000000000000000013 /* AppLockViewModel.swift in Sources */,
 				A20000000000000000000010 /* HostListViewModel.swift in Sources */,
 				A20000000000000000000004 /* AbyssalTheme.swift in Sources */,
 				A20000000000000000000005 /* AppShellView.swift in Sources */,
@@ -275,6 +294,7 @@
 			files = (
 				B20000000000000000000001 /* AbyssalThemeTests.swift in Sources */,
 				B20000000000000000000002 /* ConnectionRepositoryTests.swift in Sources */,
+				B20000000000000000000003 /* AppLockViewModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -414,6 +434,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = TetherTTY;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "TetherTTY uses Face ID to protect access to saved SSH tethers.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -440,6 +461,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = TetherTTY;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "TetherTTY uses Face ID to protect access to saved SSH tethers.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

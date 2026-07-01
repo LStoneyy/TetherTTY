@@ -1,17 +1,20 @@
 import SwiftUI
 
 struct AppShellView: View {
-    @State private var lockState: AppLockState = .locked
+    @StateObject private var lockViewModel = AppLockViewModel()
 
     var body: some View {
         ZStack {
             AbyssBackground()
 
-            switch lockState {
+            switch lockViewModel.lockState {
             case .locked:
-                LockedVaultView {
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
-                        lockState = .unlocked
+                LockedVaultView(
+                    isAuthenticating: lockViewModel.isAuthenticating,
+                    errorMessage: lockViewModel.errorMessage
+                ) {
+                    Task {
+                        await lockViewModel.unlock()
                     }
                 }
                 .transition(.opacity.combined(with: .scale(scale: 0.98)))
@@ -25,6 +28,8 @@ struct AppShellView: View {
 }
 
 private struct LockedVaultView: View {
+    let isAuthenticating: Bool
+    let errorMessage: String?
     let unlock: () -> Void
 
     var body: some View {
@@ -49,15 +54,24 @@ private struct LockedVaultView: View {
             }
 
             Button(action: unlock) {
-                Label("Unlock Vault", systemImage: "faceid")
+                Label(isAuthenticating ? "Authenticating" : "Unlock Vault", systemImage: "faceid")
                     .font(.system(.headline, design: .rounded))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
             }
             .buttonStyle(PrimaryAbyssButtonStyle())
+            .disabled(isAuthenticating)
             .padding(.horizontal, 28)
 
-            Text("Face ID enforcement lands in the vault slice. This shell shows the locked app boundary.")
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.system(.footnote, design: .rounded))
+                    .foregroundStyle(AbyssalTheme.emberWarning)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+
+            Text("Face ID or device passcode protects access to saved SSH tethers.")
                 .font(.system(.footnote, design: .rounded))
                 .foregroundStyle(AbyssalTheme.pacificCyan)
                 .multilineTextAlignment(.center)
