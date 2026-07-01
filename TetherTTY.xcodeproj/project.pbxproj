@@ -13,7 +13,13 @@
 		A20000000000000000000004 /* AbyssalTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000004 /* AbyssalTheme.swift */; };
 		A20000000000000000000005 /* AppShellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000005 /* AppShellView.swift */; };
 		A20000000000000000000006 /* HostListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000006 /* HostListView.swift */; };
+		A20000000000000000000007 /* Connection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000008 /* Connection.swift */; };
+		A20000000000000000000008 /* CredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000009 /* CredentialStore.swift */; };
+		A20000000000000000000009 /* ConnectionRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000010 /* ConnectionRepository.swift */; };
+		A20000000000000000000010 /* HostListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000011 /* HostListViewModel.swift */; };
+		A20000000000000000000011 /* ConnectionEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000012 /* ConnectionEditorView.swift */; };
 		B20000000000000000000001 /* AbyssalThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* AbyssalThemeTests.swift */; };
+		B20000000000000000000002 /* ConnectionRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* ConnectionRepositoryTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,8 +40,14 @@
 		A10000000000000000000005 /* AppShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellView.swift; sourceTree = "<group>"; };
 		A10000000000000000000006 /* HostListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostListView.swift; sourceTree = "<group>"; };
 		A10000000000000000000007 /* TetherTTY.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TetherTTY.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000008 /* Connection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connection.swift; sourceTree = "<group>"; };
+		A10000000000000000000009 /* CredentialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialStore.swift; sourceTree = "<group>"; };
+		A10000000000000000000010 /* ConnectionRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionRepository.swift; sourceTree = "<group>"; };
+		A10000000000000000000011 /* HostListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostListViewModel.swift; sourceTree = "<group>"; };
+		A10000000000000000000012 /* ConnectionEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionEditorView.swift; sourceTree = "<group>"; };
 		B10000000000000000000001 /* AbyssalThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbyssalThemeTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000002 /* TetherTTYTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TetherTTYTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10000000000000000000003 /* ConnectionRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionRepositoryTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -82,6 +94,8 @@
 			children = (
 				A10000000000000000000001 /* TetherTTYApp.swift */,
 				A30000000000000000000002 /* Models */,
+				A30000000000000000000005 /* Persistence */,
+				A30000000000000000000006 /* ViewModels */,
 				A30000000000000000000003 /* Theme */,
 				A30000000000000000000004 /* Features */,
 			);
@@ -93,8 +107,26 @@
 			children = (
 				A10000000000000000000002 /* AppLockState.swift */,
 				A10000000000000000000003 /* HostSummary.swift */,
+				A10000000000000000000008 /* Connection.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		A30000000000000000000005 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000009 /* CredentialStore.swift */,
+				A10000000000000000000010 /* ConnectionRepository.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		A30000000000000000000006 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000011 /* HostListViewModel.swift */,
+			);
+			path = ViewModels;
 			sourceTree = "<group>";
 		};
 		A30000000000000000000003 /* Theme */ = {
@@ -110,6 +142,7 @@
 			children = (
 				A10000000000000000000005 /* AppShellView.swift */,
 				A10000000000000000000006 /* HostListView.swift */,
+				A10000000000000000000012 /* ConnectionEditorView.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -118,6 +151,7 @@
 			isa = PBXGroup;
 			children = (
 				B10000000000000000000001 /* AbyssalThemeTests.swift */,
+				B10000000000000000000003 /* ConnectionRepositoryTests.swift */,
 			);
 			path = TetherTTYTests;
 			sourceTree = "<group>";
@@ -224,9 +258,14 @@
 				A20000000000000000000001 /* TetherTTYApp.swift in Sources */,
 				A20000000000000000000002 /* AppLockState.swift in Sources */,
 				A20000000000000000000003 /* HostSummary.swift in Sources */,
+				A20000000000000000000007 /* Connection.swift in Sources */,
+				A20000000000000000000008 /* CredentialStore.swift in Sources */,
+				A20000000000000000000009 /* ConnectionRepository.swift in Sources */,
+				A20000000000000000000010 /* HostListViewModel.swift in Sources */,
 				A20000000000000000000004 /* AbyssalTheme.swift in Sources */,
 				A20000000000000000000005 /* AppShellView.swift in Sources */,
 				A20000000000000000000006 /* HostListView.swift in Sources */,
+				A20000000000000000000011 /* ConnectionEditorView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -235,6 +274,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B20000000000000000000001 /* AbyssalThemeTests.swift in Sources */,
+				B20000000000000000000002 /* ConnectionRepositoryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct HostListView: View {
-    private let hosts: [HostSummary] = []
+    @StateObject private var viewModel = HostListViewModel()
+    @State private var editorDraft: ConnectionDraft?
 
     var body: some View {
         NavigationStack {
@@ -9,11 +10,23 @@ struct HostListView: View {
                 VStack(alignment: .leading, spacing: 22) {
                     HeaderView()
 
-                    if hosts.isEmpty {
-                        EmptyHostListView()
+                    if let errorMessage = viewModel.errorMessage {
+                        StatusCard(title: "Vault warning", message: errorMessage, tint: AbyssalTheme.emberWarning)
+                    }
+
+                    if viewModel.connections.isEmpty {
+                        EmptyHostListView {
+                            editorDraft = ConnectionDraft()
+                        }
                     } else {
-                        ForEach(hosts) { host in
-                            HostCard(host: host)
+                        ForEach(viewModel.connections) { connection in
+                            HostCard(
+                                connection: connection,
+                                hasPassword: viewModel.hasPassword(for: connection),
+                                edit: { editorDraft = ConnectionDraft(connection: connection) },
+                                toggleFavorite: { viewModel.toggleFavorite(connection) },
+                                delete: { viewModel.delete(connection) }
+                            )
                         }
                     }
 
@@ -26,6 +39,7 @@ struct HostListView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        editorDraft = ConnectionDraft()
                     } label: {
                         Image(systemName: "plus")
                             .font(.system(size: 16, weight: .bold))
@@ -34,6 +48,11 @@ struct HostListView: View {
                             .background(Circle().fill(AbyssalTheme.mintLeaf))
                     }
                     .accessibilityLabel("Add Connection")
+                }
+            }
+            .sheet(item: $editorDraft) { draft in
+                ConnectionEditorView(initialDraft: draft) { savedDraft in
+                    viewModel.save(savedDraft)
                 }
             }
         }
@@ -62,6 +81,8 @@ private struct HeaderView: View {
 }
 
 private struct EmptyHostListView: View {
+    let addConnection: () -> Void
+
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(spacing: 14) {
@@ -79,8 +100,7 @@ private struct EmptyHostListView: View {
                 }
             }
 
-            Button {
-            } label: {
+            Button(action: addConnection) {
                 Label("Add Connection", systemImage: "plus")
                     .font(.system(.headline, design: .rounded))
                     .frame(maxWidth: .infinity)
@@ -94,30 +114,99 @@ private struct EmptyHostListView: View {
 }
 
 private struct HostCard: View {
-    let host: HostSummary
+    let connection: Connection
+    let hasPassword: Bool
+    let edit: () -> Void
+    let toggleFavorite: () -> Void
+    let delete: () -> Void
 
     var body: some View {
-        HStack(spacing: 14) {
-            Circle()
-                .fill(host.status.tint)
-                .frame(width: 10, height: 10)
-                .shadow(color: host.status.tint.opacity(0.5), radius: 10)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 14) {
+                Circle()
+                    .fill(hasPassword ? AbyssalTheme.mintLeaf : AbyssalTheme.emberWarning)
+                    .frame(width: 10, height: 10)
+                    .shadow(color: (hasPassword ? AbyssalTheme.mintLeaf : AbyssalTheme.emberWarning).opacity(0.5), radius: 10)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(host.alias)
-                    .font(.system(.headline, design: .rounded))
-                    .foregroundStyle(AbyssalTheme.bone)
-                Text(host.address)
-                    .font(.system(.subheadline, design: .monospaced))
-                    .foregroundStyle(AbyssalTheme.bone.opacity(0.58))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(connection.alias)
+                        .font(.system(.headline, design: .rounded))
+                        .foregroundStyle(AbyssalTheme.bone)
+                    Text(connection.displayAddress)
+                        .font(.system(.subheadline, design: .monospaced))
+                        .foregroundStyle(AbyssalTheme.bone.opacity(0.58))
+                }
+
+                Spacer()
+
+                Menu {
+                    Button(action: edit) {
+                        Label("Edit", systemImage: "pencil")
+                    }
+
+                    Button(action: toggleFavorite) {
+                        Label(connection.isFavorite ? "Unfavorite" : "Favorite", systemImage: connection.isFavorite ? "star.slash" : "star")
+                    }
+
+                    Button(role: .destructive, action: delete) {
+                        Label("Delete", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(AbyssalTheme.pacificCyan)
+                        .frame(width: 34, height: 34)
+                        .background(Circle().fill(AbyssalTheme.abyss.opacity(0.42)))
+                }
             }
 
-            Spacer()
+            HStack(spacing: 8) {
+                if connection.isFavorite {
+                    Badge(label: "Favorite", systemImage: "star.fill", tint: AbyssalTheme.mintLeaf)
+                }
 
-            Image(systemName: host.isFavorite ? "star.fill" : "chevron.right")
-                .foregroundStyle(host.isFavorite ? AbyssalTheme.mintLeaf : AbyssalTheme.pacificCyan)
+                Badge(
+                    label: hasPassword ? "Password stored" : "No password",
+                    systemImage: hasPassword ? "key.fill" : "exclamationmark.triangle.fill",
+                    tint: hasPassword ? AbyssalTheme.pacificCyan : AbyssalTheme.emberWarning
+                )
+            }
         }
         .padding(18)
+        .background(AbyssCardBackground())
+    }
+}
+
+private struct Badge: View {
+    let label: String
+    let systemImage: String
+    let tint: Color
+
+    var body: some View {
+        Label(label, systemImage: systemImage)
+            .font(.system(.caption, design: .rounded, weight: .semibold))
+            .foregroundStyle(tint)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 6)
+            .background(Capsule().stroke(tint.opacity(0.36), lineWidth: 1))
+    }
+}
+
+private struct StatusCard: View {
+    let title: String
+    let message: String
+    let tint: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(.headline, design: .rounded))
+                .foregroundStyle(tint)
+            Text(message)
+                .font(.system(.subheadline, design: .rounded))
+                .foregroundStyle(AbyssalTheme.bone.opacity(0.72))
+        }
+        .padding(16)
         .background(AbyssCardBackground())
     }
 }
@@ -163,3 +252,5 @@ struct AbyssCardBackground: View {
             .shadow(color: AbyssalTheme.abyss.opacity(0.4), radius: 18, y: 12)
     }
 }
+
+extension ConnectionDraft: Identifiable {}
