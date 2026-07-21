@@ -77,6 +77,68 @@ final class PlainTerminalViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.state, .failed("sending failed"))
     }
 
+    func testSendBlockedWhenDisconnected() async {
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(),
+            sshClient: StubSSHClient(session: StubSSHSession())
+        )
+        await viewModel.connect()
+        XCTAssertEqual(viewModel.state, .terminalOpen)
+
+        await viewModel.disconnect()
+        XCTAssertEqual(viewModel.state, .disconnected)
+
+        viewModel.input = "should-not-send"
+        await viewModel.sendCurrentInput()
+
+        XCTAssertFalse(viewModel.transcript.contains("should-not-send"))
+        XCTAssertEqual(viewModel.input, "should-not-send")
+    }
+
+    func testReconnectRequestPreservesConnection() async {
+        let original = terminalRequest()
+        let viewModel = PlainTerminalViewModel(
+            request: original,
+            sshClient: StubSSHClient(session: StubSSHSession())
+        )
+
+        let reconnectRequest = viewModel.makeReconnectRequest()
+
+        XCTAssertEqual(reconnectRequest.connection.id, original.connection.id)
+        XCTAssertEqual(reconnectRequest.password, original.password)
+    }
+
+    func testReconnectRequestHasNoStartupCommand() async {
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(startupCommand: "tmux attach-session -t work"),
+            sshClient: StubSSHClient(session: StubSSHSession())
+        )
+
+        let reconnectRequest = viewModel.makeReconnectRequest()
+
+        XCTAssertNil(reconnectRequest.startupCommand)
+    }
+
+    func testReconnectDoesNotAutoRunStartupCommand() async {
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(startupCommand: "tmux attach-session -t work"),
+            sshClient: StubSSHClient(session: StubSSHSession())
+        )
+        await viewModel.connect()
+        XCTAssertTrue(viewModel.transcript.contains("tmux attach-session -t work"))
+
+        let reconnectRequest = viewModel.makeReconnectRequest()
+
+        let reconnectedVM = PlainTerminalViewModel(
+            request: reconnectRequest,
+            sshClient: StubSSHClient(session: StubSSHSession())
+        )
+        await reconnectedVM.connect()
+
+        XCTAssertEqual(reconnectedVM.state, .terminalOpen)
+        XCTAssertFalse(reconnectedVM.transcript.contains("tmux attach-session -t work"))
+    }
+
     private func terminalRequest(startupCommand: String? = nil) -> TerminalConnectionRequest {
         TerminalConnectionRequest(
             connection: Connection(alias: "Laptop", host: "192.0.2.42", username: "lukas"),

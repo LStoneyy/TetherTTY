@@ -4,8 +4,14 @@ struct PlainTerminalView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: PlainTerminalViewModel
 
-    init(request: TerminalConnectionRequest) {
+    let onReconnect: ((TerminalConnectionRequest) -> Void)?
+
+    init(
+        request: TerminalConnectionRequest,
+        onReconnect: ((TerminalConnectionRequest) -> Void)? = nil
+    ) {
         _viewModel = StateObject(wrappedValue: PlainTerminalViewModel(request: request))
+        self.onReconnect = onReconnect
     }
 
     var body: some View {
@@ -27,12 +33,60 @@ struct PlainTerminalView: View {
             }
             .background(AbyssalTheme.abyss)
 
-            TerminalInputBar(viewModel: viewModel)
+            if viewModel.state == .disconnected {
+                disconnectedFooter
+            } else {
+                TerminalInputBar(viewModel: viewModel)
+            }
         }
         .background(AbyssalTheme.abyss)
         .task {
             await viewModel.connect()
         }
+    }
+
+    private var disconnectedFooter: some View {
+        VStack(spacing: 14) {
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 13))
+                    .foregroundStyle(AbyssalTheme.emberWarning)
+
+                Text("Connection closed. Terminal input is no longer live.")
+                    .font(.system(.subheadline, design: .rounded))
+                    .foregroundStyle(AbyssalTheme.bone.opacity(0.72))
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    let reconnectRequest = viewModel.makeReconnectRequest()
+                    Task { await viewModel.disconnect() }
+                    dismiss()
+                    onReconnect?(reconnectRequest)
+                } label: {
+                    Label("Reconnect", systemImage: "arrow.clockwise")
+                        .font(.system(.headline, design: .rounded))
+                        .foregroundStyle(AbyssalTheme.abyss)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 10)
+                        .background(Capsule().fill(AbyssalTheme.mintLeaf))
+                }
+
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Close")
+                        .font(.system(.headline, design: .rounded))
+                        .foregroundStyle(AbyssalTheme.pearlAqua)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 10)
+                        .background(Capsule().stroke(AbyssalTheme.pearlAqua.opacity(0.42), lineWidth: 1))
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(AbyssalTheme.deepSpaceBlue)
     }
 }
 

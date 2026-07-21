@@ -80,7 +80,12 @@ struct HostListView: View {
                         self.terminalFlow = .terminal(terminalRequest)
                     }
                 case .terminal(let request):
-                    PlainTerminalView(request: request)
+                    PlainTerminalView(
+                        request: request,
+                        onReconnect: { reconnectRequest in
+                            self.terminalFlow = .sessionPicker(reconnectRequest)
+                        }
+                    )
                 }
             }
             .alert(item: $viewModel.hostKeyChallenge) { challenge in

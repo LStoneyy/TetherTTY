@@ -46,6 +46,8 @@ final class PlainTerminalViewModel: ObservableObject {
     }
 
     func sendCurrentInput() async {
+        guard state != .disconnected else { return }
+
         let command = input
         input = ""
 
@@ -68,6 +70,7 @@ final class PlainTerminalViewModel: ObservableObject {
     }
 
     private func sendCommand(_ command: String) async {
+        guard state != .disconnected else { return }
         guard let session else {
             state = .failed("No active terminal session.")
             return
@@ -88,6 +91,16 @@ final class PlainTerminalViewModel: ObservableObject {
         state = .disconnected
         transcript += "\n[disconnected]\n"
     }
+
+    func makeReconnectRequest() -> TerminalConnectionRequest {
+        TerminalConnectionRequest(
+            connection: request.connection,
+            password: request.password,
+            startupCommand: nil
+        )
+    }
+
+    var connectionRequest: TerminalConnectionRequest { request }
 }
 
 enum TerminalSpecialKey: String, CaseIterable, Identifiable {
