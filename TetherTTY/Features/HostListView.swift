@@ -1,9 +1,21 @@
 import SwiftUI
 
+enum TerminalFlowStep: Identifiable, Equatable {
+    case sessionPicker(TerminalConnectionRequest)
+    case terminal(TerminalConnectionRequest)
+
+    var id: UUID {
+        switch self {
+        case .sessionPicker(let r): r.id
+        case .terminal(let r): r.id
+        }
+    }
+}
+
 struct HostListView: View {
     @StateObject private var viewModel = HostListViewModel()
     @State private var editorDraft: ConnectionDraft?
-    @State private var terminalRequest: TerminalConnectionRequest?
+    @State private var terminalFlow: TerminalFlowStep?
 
     var body: some View {
         NavigationStack {
@@ -25,7 +37,9 @@ struct HostListView: View {
                                 connection: connection,
                                 hasPassword: viewModel.hasPassword(for: connection),
                                 connect: {
-                                    terminalRequest = viewModel.terminalRequest(for: connection)
+                                    if let request = viewModel.terminalRequest(for: connection) {
+                                        terminalFlow = .sessionPicker(request)
+                                    }
                                 },
                                 edit: { editorDraft = ConnectionDraft(connection: connection) },
                                 toggleFavorite: { viewModel.toggleFavorite(connection) },
@@ -59,15 +73,24 @@ struct HostListView: View {
                     viewModel.save(savedDraft)
                 }
             }
-            .fullScreenCover(item: $terminalRequest) { request in
-                PlainTerminalView(request: request)
+            .fullScreenCover(item: $terminalFlow) { step in
+                switch step {
+                case .sessionPicker(let request):
+                    SessionPickerView(request: request) { terminalRequest in
+                        self.terminalFlow = .terminal(terminalRequest)
+                    }
+                case .terminal(let request):
+                    PlainTerminalView(request: request)
+                }
             }
             .alert(item: $viewModel.hostKeyChallenge) { challenge in
                 Alert(
                     title: Text("Trust New Host?"),
                     message: Text("\(challenge.connection.displayAddress) presented fingerprint:\n\n\(challenge.fingerprint)"),
                     primaryButton: .default(Text("Trust")) {
-                        terminalRequest = viewModel.trustHostKey(challenge)
+                        if let request = viewModel.trustHostKey(challenge) {
+                            terminalFlow = .sessionPicker(request)
+                        }
                     },
                     secondaryButton: .cancel {
                         viewModel.cancelHostKeyTrust()

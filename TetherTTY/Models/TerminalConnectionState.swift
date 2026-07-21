@@ -24,4 +24,11 @@ struct TerminalConnectionRequest: Identifiable, Equatable {
     let id = UUID()
     let connection: Connection
     let password: String
+    let startupCommand: String?
+
+    init(connection: Connection, password: String, startupCommand: String? = nil) {
+        self.connection = connection
+        self.password = password
+        self.startupCommand = startupCommand
+    }
 }

@@ -36,6 +36,10 @@ final class PlainTerminalViewModel: ObservableObject {
             session = shell
             transcript = shell.banner
             state = .terminalOpen
+
+            if let startupCommand = request.startupCommand {
+                await sendCommand(startupCommand)
+            }
         } catch {
             state = .failed(error.localizedDescription)
         }
@@ -61,6 +65,21 @@ final class PlainTerminalViewModel: ObservableObject {
 
     func sendSpecialKey(_ key: TerminalSpecialKey) {
         input += key.sequence
+    }
+
+    private func sendCommand(_ command: String) async {
+        guard let session else {
+            state = .failed("No active terminal session.")
+            return
+        }
+
+        do {
+            transcript += command
+            transcript += "\n"
+            transcript += try await session.send(command)
+        } catch {
+            state = .failed(error.localizedDescription)
+        }
     }
 
     func disconnect() async {

@@ -32,6 +32,12 @@
 		B20000000000000000000003 /* AppLockViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* AppLockViewModelTests.swift */; };
 		B20000000000000000000004 /* PlainTerminalViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000005 /* PlainTerminalViewModelTests.swift */; };
 		B20000000000000000000005 /* HostKeyTrustEvaluatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* HostKeyTrustEvaluatorTests.swift */; };
+		A20000000000000000000021 /* TerminalSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000022 /* TerminalSession.swift */; };
+		A20000000000000000000022 /* TmuxSessionParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000023 /* TmuxSessionParser.swift */; };
+		A20000000000000000000023 /* TmuxSessionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000024 /* TmuxSessionProvider.swift */; };
+		A20000000000000000000024 /* SessionPickerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000025 /* SessionPickerViewModel.swift */; };
+		A20000000000000000000025 /* SessionPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000026 /* SessionPickerView.swift */; };
+		B20000000000000000000006 /* TmuxSessionParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000007 /* TmuxSessionParserTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,6 +78,12 @@
 		B10000000000000000000004 /* AppLockViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockViewModelTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000005 /* PlainTerminalViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlainTerminalViewModelTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000006 /* HostKeyTrustEvaluatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostKeyTrustEvaluatorTests.swift; sourceTree = "<group>"; };
+		A10000000000000000000022 /* TerminalSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSession.swift; sourceTree = "<group>"; };
+		A10000000000000000000023 /* TmuxSessionParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TmuxSessionParser.swift; sourceTree = "<group>"; };
+		A10000000000000000000024 /* TmuxSessionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TmuxSessionProvider.swift; sourceTree = "<group>"; };
+		A10000000000000000000025 /* SessionPickerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerViewModel.swift; sourceTree = "<group>"; };
+		A10000000000000000000026 /* SessionPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerView.swift; sourceTree = "<group>"; };
+		B10000000000000000000007 /* TmuxSessionParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TmuxSessionParserTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -121,6 +133,7 @@
 				A30000000000000000000007 /* Security */,
 				A30000000000000000000008 /* Networking */,
 				A30000000000000000000005 /* Persistence */,
+				A30000000000000000000010 /* Providers */,
 				A30000000000000000000009 /* Terminal */,
 				A30000000000000000000006 /* ViewModels */,
 				A30000000000000000000003 /* Theme */,
@@ -137,6 +150,7 @@
 				A10000000000000000000008 /* Connection.swift */,
 				A10000000000000000000015 /* TerminalConnectionState.swift */,
 				A10000000000000000000019 /* KnownHost.swift */,
+				A10000000000000000000022 /* TerminalSession.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -156,6 +170,7 @@
 				A10000000000000000000014 /* AppLockViewModel.swift */,
 				A10000000000000000000011 /* HostListViewModel.swift */,
 				A10000000000000000000017 /* PlainTerminalViewModel.swift */,
+				A10000000000000000000025 /* SessionPickerViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -176,6 +191,15 @@
 				A10000000000000000000016 /* SSHClient.swift */,
 			);
 			path = Networking;
+			sourceTree = "<group>";
+		};
+		A30000000000000000000010 /* Providers */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000023 /* TmuxSessionParser.swift */,
+				A10000000000000000000024 /* TmuxSessionProvider.swift */,
+			);
+			path = Providers;
 			sourceTree = "<group>";
 		};
 		A30000000000000000000009 /* Terminal */ = {
@@ -200,6 +224,7 @@
 				A10000000000000000000006 /* HostListView.swift */,
 				A10000000000000000000012 /* ConnectionEditorView.swift */,
 				A10000000000000000000018 /* PlainTerminalView.swift */,
+				A10000000000000000000026 /* SessionPickerView.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -212,6 +237,7 @@
 				B10000000000000000000004 /* AppLockViewModelTests.swift */,
 				B10000000000000000000005 /* PlainTerminalViewModelTests.swift */,
 				B10000000000000000000006 /* HostKeyTrustEvaluatorTests.swift */,
+				B10000000000000000000007 /* TmuxSessionParserTests.swift */,
 			);
 			path = TetherTTYTests;
 			sourceTree = "<group>";
@@ -335,6 +361,11 @@
 				A20000000000000000000006 /* HostListView.swift in Sources */,
 				A20000000000000000000011 /* ConnectionEditorView.swift in Sources */,
 				A20000000000000000000017 /* PlainTerminalView.swift in Sources */,
+				A20000000000000000000021 /* TerminalSession.swift in Sources */,
+				A20000000000000000000022 /* TmuxSessionParser.swift in Sources */,
+				A20000000000000000000023 /* TmuxSessionProvider.swift in Sources */,
+				A20000000000000000000024 /* SessionPickerViewModel.swift in Sources */,
+				A20000000000000000000025 /* SessionPickerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -347,6 +378,7 @@
 				B20000000000000000000003 /* AppLockViewModelTests.swift in Sources */,
 				B20000000000000000000004 /* PlainTerminalViewModelTests.swift in Sources */,
 				B20000000000000000000005 /* HostKeyTrustEvaluatorTests.swift in Sources */,
+				B20000000000000000000006 /* TmuxSessionParserTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
