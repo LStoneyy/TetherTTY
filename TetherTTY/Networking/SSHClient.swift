@@ -345,14 +345,14 @@ final class InteractiveShellHandler: ChannelDuplexHandler {
         guard case .byteBuffer(let bytes) = channelData.data, bytes.readableBytes > 0 else { return }
         let chunk = Array(buffer: bytes)
         DispatchQueue.main.async { [weak self] in
-            self?.session?.onOutput?(chunk)
+            self?.session?.feedOutput(chunk)
         }
     }
 
     func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
         if let exitStatus = event as? SSHChannelRequestEvent.ExitStatus {
             DispatchQueue.main.async { [weak self] in
-                self?.session?.onOutput?(Array("[exit: \(exitStatus.exitStatus)]\n".utf8))
+                self?.session?.feedOutput(Array("[exit: \(exitStatus.exitStatus)]\n".utf8))
             }
         }
     }
@@ -373,17 +373,33 @@ final class InteractiveShellHandler: ChannelDuplexHandler {
 }
 
 final class ShellChannelSession: SSHSession {
-    var onOutput: (@Sendable ([UInt8]) -> Void)?
+    var onOutput: (@Sendable ([UInt8]) -> Void)? {
+        didSet {
+            guard let cb = onOutput, !pendingOutput.isEmpty else { return }
+            let chunks = pendingOutput
+            pendingOutput.removeAll()
+            for chunk in chunks { cb(chunk) }
+        }
+    }
     var onDisconnect: (@Sendable () -> Void)?
 
     private let channel: Channel
     private let parentChannel: Channel
     private let allocator: ByteBufferAllocator
+    private var pendingOutput: [[UInt8]] = []
 
     init(channel: Channel, parentChannel: Channel, allocator: ByteBufferAllocator) {
         self.channel = channel
         self.parentChannel = parentChannel
         self.allocator = allocator
+    }
+
+    func feedOutput(_ bytes: [UInt8]) {
+        if let cb = onOutput {
+            cb(bytes)
+        } else {
+            pendingOutput.append(bytes)
+        }
     }
 
     func send(_ bytes: [UInt8]) async throws {

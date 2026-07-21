@@ -27,6 +27,7 @@ struct PlainTerminalView: View {
             }
 
             TerminalViewRepresentable(terminal: terminal)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(red: 0.04, green: 0.04, blue: 0.08))
 
             if viewModel.state == .disconnected {
@@ -65,7 +66,10 @@ struct PlainTerminalView: View {
 
     private func wireSessionOutput(_ session: SSHSession?) {
         guard var session else { return }
+        var feedCount = 0
         session.onOutput = { [weak terminal] bytes in
+            feedCount += 1
+            if feedCount <= 5 { print("[Terminal] feed #\(feedCount): \(bytes.count) bytes") }
             terminal?.feed(byteArray: ArraySlice(bytes))
         }
         terminal.onSizeChanged = { cols, rows in
