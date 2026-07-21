@@ -52,6 +52,11 @@ struct PlainTerminalView: View {
             }
         }
         .onAppear { wireTerminal() }
+        .onChange(of: viewModel.state) { _, newState in
+            if newState == .terminalOpen, let session = viewModel.session {
+                wireSessionOutput(session)
+            }
+        }
         .onChange(of: showKeyboard) { _, visible in
             if visible {
                 terminal.becomeFirstResponder()
@@ -68,9 +73,16 @@ struct PlainTerminalView: View {
         terminal.onSend = { [weak viewModel] bytes in
             viewModel?.sendBytes(bytes)
         }
-        terminal.onSizeChanged = { [weak viewModel] cols, rows in
+    }
+
+    private func wireSessionOutput(_ session: SSHSession?) {
+        guard var session else { return }
+        session.onOutput = { [weak terminal] bytes in
+            terminal?.feed(byteArray: ArraySlice(bytes))
+        }
+        terminal.onSizeChanged = { cols, rows in
             Task { @MainActor in
-                await viewModel?.session?.resize(cols: cols, rows: rows)
+                await session.resize(cols: cols, rows: rows)
             }
         }
     }
@@ -231,7 +243,7 @@ private struct TerminalAccessoryBar: View {
 
     private var toggleButton: some View {
         Button(action: toggleKeyboard) {
-            Image(systemName: keyboardVisible ? "keyboard.chevron.compact.down" : "keyboard.chevron.compact.up")
+            Image(systemName: "keyboard")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(AbyssalTheme.pearlAqua)
                 .padding(.horizontal, 10)
