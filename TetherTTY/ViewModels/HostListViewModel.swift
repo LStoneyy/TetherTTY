@@ -8,6 +8,7 @@ final class HostListViewModel: ObservableObject {
 
     private let repository: ConnectionRepository
     private let hostKeyTrustEvaluator: HostKeyTrustEvaluator
+    private let knownHostStore: KnownHostStore
 
     init(
         repository: ConnectionRepository = LocalConnectionRepository(),
@@ -15,6 +16,14 @@ final class HostListViewModel: ObservableObject {
     ) {
         self.repository = repository
         self.hostKeyTrustEvaluator = hostKeyTrustEvaluator
+        self.knownHostStore = hostKeyTrustEvaluator.knownHostStore
+    
+        if !UserDefaults.standard.bool(forKey: "known-hosts-migrated-to-real-v1") {
+            try? knownHostStore.clearAll()
+            UserDefaults.standard.set(true, forKey: "known-hosts-migrated-to-real-v1")
+            print("[SSH] Cleared old simulated known_host entries")
+        }
+    
         reload()
     }
 
@@ -39,6 +48,7 @@ final class HostListViewModel: ObservableObject {
     func delete(_ connection: Connection) {
         do {
             try repository.deleteConnection(id: connection.id)
+            try knownHostStore.removeHost(host: connection.host, port: connection.port)
             reload()
         } catch {
             errorMessage = "Could not delete this tether."

@@ -22,7 +22,7 @@ struct HostKeyTrustEvaluator {
 
     init(
         knownHostStore: KnownHostStore = LocalKnownHostStore(),
-        fingerprintResolver: HostKeyFingerprintResolver = SimulatedHostKeyFingerprintResolver()
+        fingerprintResolver: HostKeyFingerprintResolver = RealHostKeyFingerprintResolver()
     ) {
         self.knownHostStore = knownHostStore
         self.fingerprintResolver = fingerprintResolver

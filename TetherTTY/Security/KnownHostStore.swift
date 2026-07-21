@@ -3,6 +3,8 @@ import Foundation
 protocol KnownHostStore {
     func knownHost(host: String, port: Int) throws -> KnownHost?
     func trustHost(host: String, port: Int, fingerprint: String) throws
+    func removeHost(host: String, port: Int) throws
+    func clearAll() throws
 }
 
 final class LocalKnownHostStore: KnownHostStore {
@@ -28,6 +30,17 @@ final class LocalKnownHostStore: KnownHostStore {
         defaults.set(data, forKey: storageKey)
     }
 
+    func removeHost(host: String, port: Int) throws {
+        var knownHosts = try load()
+        knownHosts[KnownHost.key(host: host, port: port)] = nil
+        let data = try encoder.encode(knownHosts)
+        defaults.set(data, forKey: storageKey)
+    }
+
+    func clearAll() throws {
+        defaults.removeObject(forKey: storageKey)
+    }
+
     private func load() throws -> [String: KnownHost] {
         guard let data = defaults.data(forKey: storageKey) else { return [:] }
         return try decoder.decode([String: KnownHost].self, from: data)
@@ -44,5 +57,13 @@ final class InMemoryKnownHostStore: KnownHostStore {
     func trustHost(host: String, port: Int, fingerprint: String) throws {
         let knownHost = KnownHost(host: host, port: port, fingerprint: fingerprint, firstSeenAt: Date())
         knownHosts[knownHost.key] = knownHost
+    }
+
+    func removeHost(host: String, port: Int) throws {
+        knownHosts[KnownHost.key(host: host, port: port)] = nil
+    }
+
+    func clearAll() throws {
+        knownHosts.removeAll()
     }
 }
