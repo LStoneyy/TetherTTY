@@ -61,4 +61,8 @@ struct TerminalViewRepresentable: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: SSHTerminalView, context: Context) {}
+
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: SSHTerminalView, context: Context) -> CGSize? {
+        nil
+    }
 }

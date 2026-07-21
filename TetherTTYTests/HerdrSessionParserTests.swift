@@ -2,98 +2,130 @@ import XCTest
 @testable import TetherTTY
 
 final class HerdrSessionParserTests: XCTestCase {
-    func testParsesRepresentativeOutput() {
+    func testParsesRepresentativeJSONOutput() {
         let output = """
-        workspace\tprod\tactive\therdr enter workspace prod\tregion:us-east-1
-        agent\tbuilder\tidle\therdr attach agent builder
+        [
+          {"name": "default", "status": "attached"},
+          {"name": "work", "state": "detached", "label": "feature work"}
+        ]
         """
 
         let sessions = HerdrSessionParser.parse(output)
 
         XCTAssertEqual(sessions.count, 2)
 
-        XCTAssertEqual(sessions[0].displayName, "prod")
-        XCTAssertEqual(sessions[0].detail, "workspace · active · region:us-east-1")
+        XCTAssertEqual(sessions[0].displayName, "default")
+        XCTAssertEqual(sessions[0].detail, "session · attached")
         if case .herdr(let kind, let name, let status, let attachCommand, let metadata) = sessions[0].provider {
-            XCTAssertEqual(kind, "workspace")
-            XCTAssertEqual(name, "prod")
-            XCTAssertEqual(status, "active")
-            XCTAssertEqual(attachCommand, "herdr enter workspace prod")
-            XCTAssertEqual(metadata, "region:us-east-1")
-        } else {
-            XCTFail("Expected herdr session")
-        }
-
-        XCTAssertEqual(sessions[1].displayName, "builder")
-        if case .herdr(let kind, let name, let status, let attachCommand, let metadata) = sessions[1].provider {
-            XCTAssertEqual(kind, "agent")
-            XCTAssertEqual(name, "builder")
-            XCTAssertEqual(status, "idle")
-            XCTAssertEqual(attachCommand, "herdr attach agent builder")
+            XCTAssertEqual(kind, "session")
+            XCTAssertEqual(name, "default")
+            XCTAssertEqual(status, "attached")
+            XCTAssertEqual(attachCommand, "herdr session attach default")
             XCTAssertNil(metadata)
         } else {
             XCTFail("Expected herdr session")
         }
+
+        XCTAssertEqual(sessions[1].displayName, "work")
+        XCTAssertEqual(sessions[1].detail, "session · detached · feature work")
+        if case .herdr(_, _, let status, _, let metadata) = sessions[1].provider {
+            XCTAssertEqual(status, "detached")
+            XCTAssertEqual(metadata, "feature work")
+        } else {
+            XCTFail("Expected herdr session")
+        }
     }
 
-    func testParsesEmptyOutput() {
-        let sessions = HerdrSessionParser.parse("")
-        XCTAssertTrue(sessions.isEmpty)
-    }
-
-    func testParsesWhitespaceOnlyOutput() {
-        let sessions = HerdrSessionParser.parse("   \n  \n  ")
-        XCTAssertTrue(sessions.isEmpty)
-    }
-
-    func testSkipsMalformedRows() {
+    func testParsesJSONObjectWithSessionsKey() {
         let output = """
-        workspace\tvalid\tactive\therdr enter valid
-        not-enough-columns
-        \t\t\t
-        agent\tvalid2\tidle\therdr attach valid2\textra
+        {"sessions": [{"name": "alpha"}, {"name": "beta", "attached": true}]}
         """
 
         let sessions = HerdrSessionParser.parse(output)
 
-        XCTAssertEqual(sessions.count, 2)
+        XCTAssertEqual(sessions.map(\.displayName), ["alpha", "beta"])
+        if case .herdr(_, _, let status, _, _) = sessions[1].provider {
+            XCTAssertEqual(status, "attached")
+        } else {
+            XCTFail("Expected herdr session")
+        }
+    }
+
+    func testParsesJSONArrayOfStrings() {
+        let output = """
+        ["default", "ops"]
+        """
+
+        let sessions = HerdrSessionParser.parse(output)
+
+        XCTAssertEqual(sessions.map(\.displayName), ["default", "ops"])
+        XCTAssertEqual(sessions[0].startupCommand, "herdr session attach default")
+    }
+
+    func testParsesIdWhenNameMissing() {
+        let output = """
+        [{"id": "xyz", "status": "idle"}]
+        """
+
+        let sessions = HerdrSessionParser.parse(output)
+
+        XCTAssertEqual(sessions.count, 1)
+        XCTAssertEqual(sessions[0].displayName, "xyz")
+    }
+
+    func testParsesEmptyOutput() {
+        XCTAssertTrue(HerdrSessionParser.parse("").isEmpty)
+    }
+
+    func testParsesWhitespaceOnlyOutput() {
+        XCTAssertTrue(HerdrSessionParser.parse("   \n  \n  ").isEmpty)
+    }
+
+    func testParsesEmptyJSONArray() {
+        XCTAssertTrue(HerdrSessionParser.parse("[]").isEmpty)
+    }
+
+    func testNonJSONOutputYieldsEmpty() {
+        XCTAssertTrue(HerdrSessionParser.parse("unknown command: list").isEmpty)
+    }
+
+    func testSkipsEntriesWithoutName() {
+        let output = """
+        [{"status": "active"}, {"name": "valid"}]
+        """
+
+        let sessions = HerdrSessionParser.parse(output)
+
+        XCTAssertEqual(sessions.count, 1)
         XCTAssertEqual(sessions[0].displayName, "valid")
-        XCTAssertEqual(sessions[1].displayName, "valid2")
     }
 
-    func testSkipsRowWithEmptyKind() {
-        let output = "\tname\tactive\tcommand"
-        let sessions = HerdrSessionParser.parse(output)
-        XCTAssertTrue(sessions.isEmpty)
-    }
+    func testSkipsEntriesWithEmptyName() {
+        let output = """
+        [{"name": ""}, {"name": "valid"}]
+        """
 
-    func testSkipsRowWithEmptyName() {
-        let output = "kind\t\tactive\tcommand"
         let sessions = HerdrSessionParser.parse(output)
-        XCTAssertTrue(sessions.isEmpty)
-    }
 
-    func testSkipsRowWithEmptyAttachCommand() {
-        let output = "kind\tname\tactive\t"
-        let sessions = HerdrSessionParser.parse(output)
-        XCTAssertTrue(sessions.isEmpty)
+        XCTAssertEqual(sessions.count, 1)
+        XCTAssertEqual(sessions[0].displayName, "valid")
     }
 
     func testStartupCommandForHerdrSession() {
         let session = TerminalSession(
-            id: "herdr-workspace-prod",
+            id: "herdr-session-prod",
             provider: .herdr(
-                kind: "workspace",
+                kind: "session",
                 name: "prod",
-                status: "active",
-                attachCommand: "herdr enter workspace prod",
+                status: "attached",
+                attachCommand: "herdr session attach prod",
                 metadata: nil
             ),
             displayName: "prod",
-            detail: "workspace · active"
+            detail: "session · attached"
         )
 
-        XCTAssertEqual(session.startupCommand, "herdr enter workspace prod")
+        XCTAssertEqual(session.startupCommand, "herdr session attach prod")
     }
 
     func testStartupCommandForPlainShell() {

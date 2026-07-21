@@ -237,6 +237,7 @@ final class ExecCommandHandler: ChannelDuplexHandler {
 
     private let command: String
     private var output = ByteBuffer()
+    private var errorOutput = ByteBuffer()
     private let continuation: CheckedContinuation<String, Error>
     private var didResume = false
 
@@ -244,6 +245,7 @@ final class ExecCommandHandler: ChannelDuplexHandler {
         self.command = command
         self.continuation = continuation
         self.output = allocator.buffer(capacity: 4096)
+        self.errorOutput = allocator.buffer(capacity: 1024)
     }
 
     func handlerAdded(context: ChannelHandlerContext) {
@@ -255,8 +257,15 @@ final class ExecCommandHandler: ChannelDuplexHandler {
 
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let channelData = unwrapInboundIn(data)
-        guard case .byteBuffer(var bytes) = channelData.data, channelData.type == .channel else { return }
-        output.writeBuffer(&bytes)
+        guard case .byteBuffer(var bytes) = channelData.data else { return }
+        switch channelData.type {
+        case .channel:
+            output.writeBuffer(&bytes)
+        case .stdErr:
+            errorOutput.writeBuffer(&bytes)
+        default:
+            break
+        }
     }
 
     func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
@@ -264,7 +273,9 @@ final class ExecCommandHandler: ChannelDuplexHandler {
         case _ as SSHChannelRequestEvent.ExitStatus, _ as SSHChannelRequestEvent.ExitSignal:
             guard !didResume else { return }
             didResume = true
-            continuation.resume(returning: String(buffer: output))
+            let stdout = String(buffer: output)
+            let result = stdout.isEmpty ? String(buffer: errorOutput) : stdout
+            continuation.resume(returning: result)
             context.close(promise: nil)
         default:
             context.fireUserInboundEventTriggered(event)

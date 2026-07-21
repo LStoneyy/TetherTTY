@@ -44,32 +44,16 @@ struct RealHerdrSessionProvider: HerdrSessionProvider {
     }
 
     func fetchSessions(for request: TerminalConnectionRequest) async throws -> [TerminalSession] {
-        let requestConfig = SSHShellRequest(
-            host: request.connection.host,
-            port: request.connection.port,
-            username: request.connection.username,
-            password: request.password
+        let output = try await sshClient.execute(
+            SSHShellRequest(
+                host: request.connection.host,
+                port: request.connection.port,
+                username: request.connection.username,
+                password: request.password
+            ),
+            command: "herdr session list --json"
         )
-
-        let commands = [
-            "herdr list",
-            "herdr status"
-        ]
-
-        var allSessions: [TerminalSession] = []
-        for cmd in commands {
-            do {
-                let output = try await sshClient.execute(requestConfig, command: cmd)
-                let sessions = HerdrSessionParser.parse(output)
-                if !sessions.isEmpty {
-                    allSessions.append(contentsOf: sessions)
-                    break
-                }
-            } catch {
-                continue
-            }
-        }
-
-        return allSessions
+        print("[Herdr] raw output: \(output)")
+        return HerdrSessionParser.parse(output)
     }
 }

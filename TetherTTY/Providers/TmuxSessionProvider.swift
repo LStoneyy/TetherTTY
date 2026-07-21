@@ -52,6 +52,7 @@ struct RealTmuxSessionProvider: TmuxSessionProvider {
             ),
             command: "tmux list-sessions -F '#{session_name}\t#{session_windows}\t#{session_attached}\t#{session_created}'"
         )
+        print("[Tmux] raw output: \(output)")
         return TmuxSessionParser.parse(output)
     }
 }
