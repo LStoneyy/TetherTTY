@@ -140,12 +140,18 @@ final class SwiftNIOSSHClient: SSHClient {
                 }
                 return childChannel.eventLoop.makeCompletedFuture {
                     _ = childChannel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
-                    let shell = InteractiveShellHandler(
-                        continuation: cont,
-                        allocator: childChannel.allocator
-                    )
-                    try childChannel.pipeline.syncOperations.addHandler(shell)
-                    print("[SSH] openShell: shell handler added")
+                    do {
+                        let shell = InteractiveShellHandler(
+                            continuation: cont,
+                            allocator: childChannel.allocator
+                        )
+                        try childChannel.pipeline.syncOperations.addHandler(shell)
+                        print("[SSH] openShell: shell handler added")
+                    } catch {
+                        guard !didResume else { return }
+                        didResume = true
+                        cont.resume(throwing: error)
+                    }
                 }
             }
         }
@@ -184,7 +190,7 @@ final class SwiftNIOSSHClient: SSHClient {
 
         print("[SSH] execute: connected, creating exec channel...")
 
-        return try await withCheckedThrowingContinuation { cont in
+        let result: String = try await withCheckedThrowingContinuation { cont in
             var didResume = false
             let timeout = channel.eventLoop.scheduleTask(in: .seconds(8)) {
                 guard !didResume else { return }
@@ -203,13 +209,22 @@ final class SwiftNIOSSHClient: SSHClient {
                 }
                 return childChannel.eventLoop.makeCompletedFuture {
                     _ = childChannel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
-                    try childChannel.pipeline.syncOperations.addHandler(
-                        ExecCommandHandler(command: command, continuation: cont, allocator: childChannel.allocator)
-                    )
-                    print("[SSH] execute: exec handler added")
+                    do {
+                        try childChannel.pipeline.syncOperations.addHandler(
+                            ExecCommandHandler(command: command, continuation: cont, allocator: childChannel.allocator)
+                        )
+                        print("[SSH] execute: exec handler added")
+                    } catch {
+                        guard !didResume else { return }
+                        didResume = true
+                        cont.resume(throwing: error)
+                    }
                 }
             }
         }
+
+        try? await channel.close()
+        return result
     }
 }
 
@@ -315,6 +330,7 @@ final class InteractiveShellHandler: ChannelDuplexHandler {
             let initial = await self.outputActor.drain()
             let session = ShellChannelSession(
                 channel: context.channel,
+                parentChannel: context.channel.parent!,
                 allocator: self.allocator,
                 outputActor: self.outputActor,
                 banner: initial
@@ -340,11 +356,13 @@ final class InteractiveShellHandler: ChannelDuplexHandler {
 final class ShellChannelSession: SSHSession {
     let banner: String
     private var channel: Channel?
+    private var parentChannel: Channel?
     private let allocator: ByteBufferAllocator
     private let outputActor: ShellOutputActor
 
-    init(channel: Channel, allocator: ByteBufferAllocator, outputActor: ShellOutputActor, banner: String) {
+    init(channel: Channel, parentChannel: Channel, allocator: ByteBufferAllocator, outputActor: ShellOutputActor, banner: String) {
         self.channel = channel
+        self.parentChannel = parentChannel
         self.allocator = allocator
         self.outputActor = outputActor
         self.banner = banner
@@ -367,6 +385,8 @@ final class ShellChannelSession: SSHSession {
     func disconnect() async {
         try? await channel?.close()
         channel = nil
+        try? await parentChannel?.close()
+        parentChannel = nil
     }
 }
 
