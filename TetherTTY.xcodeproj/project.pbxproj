@@ -38,6 +38,9 @@
 		A20000000000000000000024 /* SessionPickerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000025 /* SessionPickerViewModel.swift */; };
 		A20000000000000000000025 /* SessionPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000026 /* SessionPickerView.swift */; };
 		B20000000000000000000006 /* TmuxSessionParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000007 /* TmuxSessionParserTests.swift */; };
+		A20000000000000000000026 /* HerdrSessionParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000027 /* HerdrSessionParser.swift */; };
+		A20000000000000000000027 /* HerdrSessionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000028 /* HerdrSessionProvider.swift */; };
+		B20000000000000000000007 /* HerdrSessionParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000008 /* HerdrSessionParserTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -84,6 +87,9 @@
 		A10000000000000000000025 /* SessionPickerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerViewModel.swift; sourceTree = "<group>"; };
 		A10000000000000000000026 /* SessionPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerView.swift; sourceTree = "<group>"; };
 		B10000000000000000000007 /* TmuxSessionParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TmuxSessionParserTests.swift; sourceTree = "<group>"; };
+		A10000000000000000000027 /* HerdrSessionParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HerdrSessionParser.swift; sourceTree = "<group>"; };
+		A10000000000000000000028 /* HerdrSessionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HerdrSessionProvider.swift; sourceTree = "<group>"; };
+		B10000000000000000000008 /* HerdrSessionParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HerdrSessionParserTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -198,6 +204,8 @@
 			children = (
 				A10000000000000000000023 /* TmuxSessionParser.swift */,
 				A10000000000000000000024 /* TmuxSessionProvider.swift */,
+				A10000000000000000000027 /* HerdrSessionParser.swift */,
+				A10000000000000000000028 /* HerdrSessionProvider.swift */,
 			);
 			path = Providers;
 			sourceTree = "<group>";
@@ -238,6 +246,7 @@
 				B10000000000000000000005 /* PlainTerminalViewModelTests.swift */,
 				B10000000000000000000006 /* HostKeyTrustEvaluatorTests.swift */,
 				B10000000000000000000007 /* TmuxSessionParserTests.swift */,
+				B10000000000000000000008 /* HerdrSessionParserTests.swift */,
 			);
 			path = TetherTTYTests;
 			sourceTree = "<group>";
@@ -366,6 +375,8 @@
 				A20000000000000000000023 /* TmuxSessionProvider.swift in Sources */,
 				A20000000000000000000024 /* SessionPickerViewModel.swift in Sources */,
 				A20000000000000000000025 /* SessionPickerView.swift in Sources */,
+				A20000000000000000000026 /* HerdrSessionParser.swift in Sources */,
+				A20000000000000000000027 /* HerdrSessionProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -379,6 +390,7 @@
 				B20000000000000000000004 /* PlainTerminalViewModelTests.swift in Sources */,
 				B20000000000000000000005 /* HostKeyTrustEvaluatorTests.swift in Sources */,
 				B20000000000000000000006 /* TmuxSessionParserTests.swift in Sources */,
+				B20000000000000000000007 /* HerdrSessionParserTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

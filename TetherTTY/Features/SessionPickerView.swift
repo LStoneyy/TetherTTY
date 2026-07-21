@@ -24,10 +24,27 @@ struct SessionPickerView: View {
 
                     if viewModel.isLoading {
                         loadingState
-                    } else if let errorMessage = viewModel.errorMessage {
+                    } else if let errorMessage = viewModel.errorMessage, tmuxSessions.isEmpty && herdrSessions.isEmpty {
                         errorState(message: errorMessage)
                     } else {
-                        tmuxSection
+                        if !tmuxSessions.isEmpty {
+                            sectionHeader(title: "Tmux Sessions")
+                            ForEach(tmuxSessions) { session in
+                                sessionCard(for: session)
+                            }
+                        }
+
+                        if !herdrSessions.isEmpty {
+                            sectionHeader(title: "Herdr Sessions")
+                            ForEach(herdrSessions) { session in
+                                sessionCard(for: session)
+                            }
+                        }
+
+                        if let herdrError = viewModel.herdrErrorMessage {
+                            herdrErrorBanner(message: herdrError)
+                        }
+
                         plainShellSection
                     }
                 }
@@ -38,6 +55,20 @@ struct SessionPickerView: View {
         }
         .task {
             await viewModel.fetchSessions()
+        }
+    }
+
+    private var tmuxSessions: [TerminalSession] {
+        viewModel.sessions.filter {
+            if case .tmux = $0.provider { return true }
+            return false
+        }
+    }
+
+    private var herdrSessions: [TerminalSession] {
+        viewModel.sessions.filter {
+            if case .herdr = $0.provider { return true }
+            return false
         }
     }
 
@@ -53,7 +84,7 @@ struct SessionPickerView: View {
                 .font(.system(size: 36, weight: .bold, design: .rounded))
                 .foregroundStyle(AbyssalTheme.bone)
 
-            Text("Select a tmux session to attach or open a plain shell.")
+            Text("Select a tmux or Herdr session to attach or open a plain shell.")
                 .font(.system(.body, design: .rounded))
                 .foregroundStyle(AbyssalTheme.bone.opacity(0.68))
         }
@@ -87,36 +118,33 @@ struct SessionPickerView: View {
         .background(AbyssCardBackground())
     }
 
-    private var tmuxSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if viewModel.sessions.isEmpty {
-                Text("No tmux sessions found")
-                    .font(.system(.headline, design: .rounded))
-                    .foregroundStyle(AbyssalTheme.bone.opacity(0.66))
-            } else {
-                Text("Tmux Sessions")
-                    .font(.system(.caption, design: .rounded, weight: .semibold))
-                    .foregroundStyle(AbyssalTheme.bone.opacity(0.62))
-                    .textCase(.uppercase)
-                    .tracking(1.2)
-
-                ForEach(viewModel.sessions) { session in
-                    sessionCard(for: session)
-                }
-            }
-        }
+    private func sectionHeader(title: String) -> some View {
+        Text(title)
+            .font(.system(.caption, design: .rounded, weight: .semibold))
+            .foregroundStyle(AbyssalTheme.bone.opacity(0.62))
+            .textCase(.uppercase)
+            .tracking(1.2)
     }
 
     private var plainShellSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Fallback")
-                .font(.system(.caption, design: .rounded, weight: .semibold))
-                .foregroundStyle(AbyssalTheme.bone.opacity(0.62))
-                .textCase(.uppercase)
-                .tracking(1.2)
-
+            sectionHeader(title: "Fallback")
             sessionCard(for: .plainShellSession)
         }
+    }
+
+    private func herdrErrorBanner(message: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 12))
+                .foregroundStyle(AbyssalTheme.emberWarning)
+
+            Text("Herdr discovery: \(message)")
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(AbyssalTheme.bone.opacity(0.62))
+        }
+        .padding(10)
+        .background(AbyssCardBackground())
     }
 
     private func sessionCard(for session: TerminalSession) -> some View {
@@ -156,6 +184,8 @@ struct SessionPickerView: View {
         switch session.provider {
         case .tmux:
             AbyssalTheme.mintLeaf
+        case .herdr:
+            AbyssalTheme.emberWarning
         case .plainShell:
             AbyssalTheme.pacificCyan
         }
