@@ -3,12 +3,11 @@ import Foundation
 @MainActor
 final class PlainTerminalViewModel: ObservableObject {
     @Published private(set) var state: TerminalConnectionState = .idle
-    @Published private(set) var transcript = ""
-    @Published var input = ""
+    @Published private(set) var session: SSHSession?
 
     private let request: TerminalConnectionRequest
     private let sshClient: SSHClient
-    private var session: SSHSession?
+    private var connectedSession: SSHSession?
 
     init(request: TerminalConnectionRequest, sshClient: SSHClient = SwiftNIOSSHClient()) {
         self.request = request
@@ -24,7 +23,7 @@ final class PlainTerminalViewModel: ObservableObject {
             try await Task.sleep(nanoseconds: 120_000_000)
             state = .authenticating
 
-            let shell = try await sshClient.openShell(
+            var shell = try await sshClient.openShell(
                 SSHShellRequest(
                     host: request.connection.host,
                     port: request.connection.port,
@@ -38,63 +37,36 @@ final class PlainTerminalViewModel: ObservableObject {
                 return
             }
 
+            shell.onDisconnect = { [weak self] in
+                Task { @MainActor [weak self] in
+                    self?.state = .disconnected
+                }
+            }
+
+            connectedSession = shell
             session = shell
-            transcript = shell.banner
             state = .terminalOpen
 
             if let startupCommand = request.startupCommand {
-                await sendCommand(startupCommand)
+                try? await shell.send(Array((startupCommand + "\n").utf8))
             }
         } catch {
             state = .failed(error.localizedDescription)
         }
     }
 
-    func sendCurrentInput() async {
-        guard state != .disconnected else { return }
-
-        let command = input
-        input = ""
-
-        guard let session else {
-            state = .failed("No active terminal session.")
-            return
-        }
-
-        do {
-            transcript += command
-            transcript += "\n"
-            transcript += try await session.send(command)
-        } catch {
-            state = .failed(error.localizedDescription)
-        }
-    }
-
-    func sendSpecialKey(_ key: TerminalSpecialKey) {
-        input += key.sequence
-    }
-
-    private func sendCommand(_ command: String) async {
-        guard state != .disconnected else { return }
-        guard let session else {
-            state = .failed("No active terminal session.")
-            return
-        }
-
-        do {
-            transcript += command
-            transcript += "\n"
-            transcript += try await session.send(command)
-        } catch {
-            state = .failed(error.localizedDescription)
+    func sendBytes(_ bytes: [UInt8]) {
+        guard let session = connectedSession else { return }
+        Task {
+            try? await session.send(bytes)
         }
     }
 
     func disconnect() async {
-        await session?.disconnect()
+        await connectedSession?.disconnect()
+        connectedSession = nil
         session = nil
         state = .disconnected
-        transcript += "\n[disconnected]\n"
     }
 
     func makeReconnectRequest() -> TerminalConnectionRequest {
@@ -112,24 +84,24 @@ enum TerminalSpecialKey: String, CaseIterable, Identifiable {
     case esc = "Esc"
     case ctrl = "Ctrl"
     case tab = "Tab"
-    case up = "↑"
-    case down = "↓"
+    case up = "\u{2191}"
+    case down = "\u{2193}"
     case pipe = "|"
     case tilde = "~"
     case slash = "/"
 
     var id: String { rawValue }
 
-    var sequence: String {
+    var bytes: [UInt8] {
         switch self {
-        case .esc: "\u{1B}"
-        case .ctrl: "^"
-        case .tab: "\t"
-        case .up: "\u{1B}[A"
-        case .down: "\u{1B}[B"
-        case .pipe: "|"
-        case .tilde: "~"
-        case .slash: "/"
+        case .esc: [0x1B]
+        case .ctrl: [] // modifier — handled by CtrlState in view
+        case .tab: [0x09]
+        case .up: [0x1B, 0x5B, 0x41]
+        case .down: [0x1B, 0x5B, 0x42]
+        case .pipe: [0x7C]
+        case .tilde: [0x7E]
+        case .slash: [0x2F]
         }
     }
 }

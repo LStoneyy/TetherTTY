@@ -3,7 +3,7 @@ import XCTest
 
 @MainActor
 final class PlainTerminalViewModelTests: XCTestCase {
-    func testConnectOpensTerminalAndShowsBanner() async {
+    func testConnectTransitionsStateToTerminalOpen() async {
         let viewModel = PlainTerminalViewModel(
             request: terminalRequest(),
             sshClient: StubSSHClient(session: StubSSHSession())
@@ -12,34 +12,20 @@ final class PlainTerminalViewModelTests: XCTestCase {
         await viewModel.connect()
 
         XCTAssertEqual(viewModel.state, .terminalOpen)
-        XCTAssertEqual(viewModel.transcript, "stub banner\n")
+        XCTAssertNotNil(viewModel.session)
     }
 
-    func testSendCurrentInputAppendsCommandAndOutput() async {
+    func testStartupCommandSentAsBytes() async {
+        let session = StubSSHSession()
         let viewModel = PlainTerminalViewModel(
-            request: terminalRequest(),
-            sshClient: StubSSHClient(session: StubSSHSession())
+            request: terminalRequest(startupCommand: "tmux attach-session -t work"),
+            sshClient: StubSSHClient(session: session)
         )
+
         await viewModel.connect()
 
-        viewModel.input = "pwd"
-        await viewModel.sendCurrentInput()
-
-        XCTAssertTrue(viewModel.transcript.contains("pwd"))
-        XCTAssertTrue(viewModel.transcript.contains("stub output for pwd"))
-        XCTAssertEqual(viewModel.input, "")
-    }
-
-    func testSpecialKeyAddsTerminalSequenceToInput() {
-        let viewModel = PlainTerminalViewModel(
-            request: terminalRequest(),
-            sshClient: StubSSHClient(session: StubSSHSession())
-        )
-
-        viewModel.sendSpecialKey(.tab)
-        viewModel.sendSpecialKey(.pipe)
-
-        XCTAssertEqual(viewModel.input, "\t|")
+        let expected = Array("tmux attach-session -t work\n".utf8)
+        XCTAssertEqual(session.sentBytes, expected)
     }
 
     func testFailedConnectShowsFailureState() async {
@@ -51,33 +37,10 @@ final class PlainTerminalViewModelTests: XCTestCase {
         await viewModel.connect()
 
         XCTAssertEqual(viewModel.state, .failed("No route to host"))
+        XCTAssertNil(viewModel.session)
     }
 
-    func testStartupCommandSentAfterConnect() async {
-        let session = StubSSHSession()
-        let viewModel = PlainTerminalViewModel(
-            request: terminalRequest(startupCommand: "tmux attach-session -t work"),
-            sshClient: StubSSHClient(session: session)
-        )
-
-        await viewModel.connect()
-
-        XCTAssertTrue(viewModel.transcript.contains("tmux attach-session -t work"))
-        XCTAssertTrue(viewModel.transcript.contains("stub output for tmux attach-session -t work"))
-    }
-
-    func testStartupCommandFailureShowsFailedState() async {
-        let viewModel = PlainTerminalViewModel(
-            request: terminalRequest(startupCommand: "explode"),
-            sshClient: StubSSHClient(session: FailingSessionOnSend())
-        )
-
-        await viewModel.connect()
-
-        XCTAssertEqual(viewModel.state, .failed("sending failed"))
-    }
-
-    func testSendBlockedWhenDisconnected() async {
+    func testDisconnectSetsStateAndClearsSession() async {
         let viewModel = PlainTerminalViewModel(
             request: terminalRequest(),
             sshClient: StubSSHClient(session: StubSSHSession())
@@ -86,13 +49,23 @@ final class PlainTerminalViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.state, .terminalOpen)
 
         await viewModel.disconnect()
+
         XCTAssertEqual(viewModel.state, .disconnected)
+        XCTAssertNil(viewModel.session)
+    }
 
-        viewModel.input = "should-not-send"
-        await viewModel.sendCurrentInput()
+    func testSendBytesForwardsToSession() async {
+        let session = StubSSHSession()
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(),
+            sshClient: StubSSHClient(session: session)
+        )
+        await viewModel.connect()
 
-        XCTAssertFalse(viewModel.transcript.contains("should-not-send"))
-        XCTAssertEqual(viewModel.input, "should-not-send")
+        viewModel.sendBytes([0x1B, 0x5B, 0x41])
+
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(session.sentBytes, [0x1B, 0x5B, 0x41])
     }
 
     func testReconnectRequestPreservesConnection() async {
@@ -119,24 +92,20 @@ final class PlainTerminalViewModelTests: XCTestCase {
         XCTAssertNil(reconnectRequest.startupCommand)
     }
 
-    func testReconnectDoesNotAutoRunStartupCommand() async {
+    func testDisconnectCallbackSetsStateDisconnected() async {
+        let session = StubSSHSession()
         let viewModel = PlainTerminalViewModel(
-            request: terminalRequest(startupCommand: "tmux attach-session -t work"),
-            sshClient: StubSSHClient(session: StubSSHSession())
+            request: terminalRequest(),
+            sshClient: StubSSHClient(session: session)
         )
         await viewModel.connect()
-        XCTAssertTrue(viewModel.transcript.contains("tmux attach-session -t work"))
+        XCTAssertEqual(viewModel.state, .terminalOpen)
 
-        let reconnectRequest = viewModel.makeReconnectRequest()
+        session.onDisconnect?()
 
-        let reconnectedVM = PlainTerminalViewModel(
-            request: reconnectRequest,
-            sshClient: StubSSHClient(session: StubSSHSession())
-        )
-        await reconnectedVM.connect()
-
-        XCTAssertEqual(reconnectedVM.state, .terminalOpen)
-        XCTAssertFalse(reconnectedVM.transcript.contains("tmux attach-session -t work"))
+        // Wait for MainActor task to process
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(viewModel.state, .disconnected)
     }
 
     private func terminalRequest(startupCommand: String? = nil) -> TerminalConnectionRequest {
@@ -171,21 +140,15 @@ private struct FailingSSHClient: SSHClient {
 }
 
 final class StubSSHSession: SSHSession {
-    let banner = "stub banner\n"
+    var onOutput: (@Sendable ([UInt8]) -> Void)?
+    var onDisconnect: (@Sendable () -> Void)?
+    private(set) var sentBytes: [UInt8]?
 
-    func send(_ input: String) async throws -> String {
-        "stub output for \(input)\n"
+    func send(_ bytes: [UInt8]) async throws {
+        sentBytes = bytes
     }
 
-    func disconnect() async {}
-}
-
-private final class FailingSessionOnSend: SSHSession {
-    let banner = "failing banner\n"
-
-    func send(_ input: String) async throws -> String {
-        throw SSHClientError.connectionFailed("sending failed")
-    }
+    func resize(cols: Int, rows: Int) async {}
 
     func disconnect() async {}
 }

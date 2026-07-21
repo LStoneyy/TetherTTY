@@ -4,7 +4,11 @@ struct PlainTerminalView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: PlainTerminalViewModel
 
+    @State private var showKeyboard = false
+    @State private var ctrlActive = false
+
     let onReconnect: ((TerminalConnectionRequest) -> Void)?
+    private let terminal = SSHTerminalView(frame: .zero)
 
     init(
         request: TerminalConnectionRequest,
@@ -14,52 +18,60 @@ struct PlainTerminalView: View {
         self.onReconnect = onReconnect
     }
 
-    private var transcriptText: String {
-        if !viewModel.transcript.isEmpty {
-            return viewModel.transcript
-        }
-        switch viewModel.state {
-        case .idle, .connecting:
-            return "Connecting..."
-        case .authenticating:
-            return "Authenticating..."
-        case .terminalOpen:
-            return "Terminal open."
-        case .disconnected:
-            return "Connection closed."
-        case .failed(let message):
-            return "Connection failed: \(message)"
-        }
-    }
-
     var body: some View {
         VStack(spacing: 0) {
-            TerminalStatusBar(state: viewModel.state) {
+            TerminalStatusBar(state: viewModel.state, showKeyboard: $showKeyboard) {
                 Task {
                     await viewModel.disconnect()
                     dismiss()
                 }
             }
 
-            ScrollView {
-                Text(transcriptText)
-                    .font(.system(size: 14, weight: .regular, design: .monospaced))
-                    .foregroundStyle(AbyssalTheme.bone)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(16)
-                    .textSelection(.enabled)
-            }
-            .background(AbyssalTheme.abyss)
+            TerminalViewRepresentable(terminal: terminal)
+                .background(Color(red: 0.04, green: 0.04, blue: 0.08))
 
             if viewModel.state == .disconnected {
                 disconnectedFooter
             } else {
-                TerminalInputBar(viewModel: viewModel)
+                TerminalAccessoryBar(
+                    ctrlActive: $ctrlActive,
+                    onKey: { key in
+                        if ctrlActive {
+                            ctrlActive = false
+                            if let first = key.bytes.first {
+                                viewModel.sendBytes([first & 0x1F])
+                            }
+                        } else {
+                            viewModel.sendBytes(key.bytes)
+                        }
+                    },
+                    keyboardVisible: showKeyboard
+                ) {
+                    showKeyboard.toggle()
+                }
             }
         }
-        .background(AbyssalTheme.abyss)
+        .onAppear { wireTerminal() }
+        .onChange(of: showKeyboard) { _, visible in
+            if visible {
+                terminal.becomeFirstResponder()
+            } else {
+                terminal.resignFirstResponder()
+            }
+        }
         .task {
             await viewModel.connect()
+        }
+    }
+
+    private func wireTerminal() {
+        terminal.onSend = { [weak viewModel] bytes in
+            viewModel?.sendBytes(bytes)
+        }
+        terminal.onSizeChanged = { [weak viewModel] cols, rows in
+            Task { @MainActor in
+                await viewModel?.session?.resize(cols: cols, rows: rows)
+            }
         }
     }
 
@@ -110,6 +122,7 @@ struct PlainTerminalView: View {
 
 private struct TerminalStatusBar: View {
     let state: TerminalConnectionState
+    @Binding var showKeyboard: Bool
     let close: () -> Void
 
     var body: some View {
@@ -132,9 +145,23 @@ private struct TerminalStatusBar: View {
 
             Spacer()
 
-            Button("Close", action: close)
-                .font(.system(.caption, design: .rounded, weight: .semibold))
-                .foregroundStyle(AbyssalTheme.pearlAqua)
+            if state == .terminalOpen {
+                Button {
+                    showKeyboard.toggle()
+                } label: {
+                    Image(systemName: "keyboard")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(showKeyboard ? AbyssalTheme.mintLeaf : AbyssalTheme.pearlAqua)
+                }
+
+                Button("Close", action: close)
+                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                    .foregroundStyle(AbyssalTheme.pearlAqua)
+            } else {
+                Button("Close", action: close)
+                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                    .foregroundStyle(AbyssalTheme.pearlAqua)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -151,48 +178,64 @@ private struct TerminalStatusBar: View {
     }
 }
 
-private struct TerminalInputBar: View {
-    @ObservedObject var viewModel: PlainTerminalViewModel
+private struct TerminalAccessoryBar: View {
+    @Binding var ctrlActive: Bool
+    let onKey: (TerminalSpecialKey) -> Void
+    let keyboardVisible: Bool
+    let toggleKeyboard: () -> Void
 
     var body: some View {
-        VStack(spacing: 8) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(TerminalSpecialKey.allCases) { key in
-                        Button(key.rawValue) {
-                            viewModel.sendSpecialKey(key)
-                        }
+        HStack(spacing: 6) {
+            scrollableKeys
+            Spacer()
+            toggleButton
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(AbyssalTheme.deepSpaceBlue)
+    }
+
+    private var scrollableKeys: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                Button {
+                    ctrlActive.toggle()
+                } label: {
+                    Text("Ctrl")
                         .font(.system(.caption, design: .rounded, weight: .bold))
-                        .foregroundStyle(AbyssalTheme.pearlAqua)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(Capsule().stroke(AbyssalTheme.pacificCyan.opacity(0.42), lineWidth: 1))
-                    }
+                        .foregroundStyle(ctrlActive ? AbyssalTheme.mintLeaf : AbyssalTheme.pearlAqua)
                 }
                 .padding(.horizontal, 12)
-            }
+                .padding(.vertical, 6)
+                .background(
+                    Capsule().stroke(
+                        ctrlActive ? AbyssalTheme.mintLeaf : AbyssalTheme.pacificCyan.opacity(0.42),
+                        lineWidth: 1
+                    )
+                )
 
-            HStack(spacing: 10) {
-                TextField("Command", text: $viewModel.input)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .font(.system(.body, design: .monospaced))
-                    .foregroundStyle(AbyssalTheme.bone)
-                    .padding(10)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(AbyssalTheme.abyss.opacity(0.72)))
-
-                Button("Send") {
-                    Task { await viewModel.sendCurrentInput() }
+                ForEach(TerminalSpecialKey.allCases.filter { $0 != .ctrl }) { key in
+                    Button(key.rawValue) {
+                        onKey(key)
+                    }
+                    .font(.system(.caption, design: .rounded, weight: .bold))
+                    .foregroundStyle(AbyssalTheme.pearlAqua)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Capsule().stroke(AbyssalTheme.pacificCyan.opacity(0.42), lineWidth: 1))
                 }
-                .font(.system(.headline, design: .rounded))
-                .foregroundStyle(AbyssalTheme.abyss)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Capsule().fill(AbyssalTheme.mintLeaf))
             }
-            .padding(.horizontal, 12)
+            .padding(.leading, 4)
         }
-        .padding(.vertical, 10)
-        .background(AbyssalTheme.deepSpaceBlue)
+    }
+
+    private var toggleButton: some View {
+        Button(action: toggleKeyboard) {
+            Image(systemName: keyboardVisible ? "keyboard.chevron.compact.down" : "keyboard.chevron.compact.up")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(AbyssalTheme.pearlAqua)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+        }
     }
 }

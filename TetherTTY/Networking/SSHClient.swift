@@ -16,8 +16,10 @@ protocol SSHClient {
 }
 
 protocol SSHSession {
-    var banner: String { get }
-    func send(_ input: String) async throws -> String
+    var onOutput: (@Sendable ([UInt8]) -> Void)? { get set }
+    var onDisconnect: (@Sendable () -> Void)? { get set }
+    func send(_ bytes: [UInt8]) async throws
+    func resize(cols: Int, rows: Int) async
     func disconnect() async
 }
 
@@ -46,7 +48,7 @@ struct SimulatedSSHClient: SSHClient {
             throw SSHClientError.missingPassword
         }
 
-        return SimulatedSSHSession(request: request)
+        return SimulatedSSHSession()
     }
 
     func execute(_ request: SSHShellRequest, command: String) async throws -> String {
@@ -56,25 +58,16 @@ struct SimulatedSSHClient: SSHClient {
 }
 
 final class SimulatedSSHSession: SSHSession {
-    let banner: String
-    private let prompt: String
+    var onOutput: (@Sendable ([UInt8]) -> Void)?
+    var onDisconnect: (@Sendable () -> Void)?
 
-    init(request: SSHShellRequest) {
-        prompt = "\(request.username)@\(request.host)$"
-        banner = "Connected to \(request.username)@\(request.host):\(request.port)\n\(prompt) "
-    }
-
-    func send(_ input: String) async throws -> String {
+    func send(_ bytes: [UInt8]) async throws {
         try await Task.sleep(nanoseconds: 80_000_000)
-        let command = input.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        if command == "clear" {
-            return "\(prompt) "
-        }
-
-        return "\(command)\n(simulated ssh shell) command accepted\n\(prompt) "
+        let input = String(decoding: bytes, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        onOutput?(Array("\(input)\n(simulated ssh shell) command accepted\n".utf8))
     }
 
+    func resize(cols: Int, rows: Int) async {}
     func disconnect() async {}
 }
 
@@ -129,28 +122,32 @@ final class SwiftNIOSSHClient: SSHClient {
                 print("[SSH] openShell: timed out waiting for channel")
                 cont.resume(throwing: SSHClientError.connectionFailed("Shell channel setup timed out"))
             }
-            sshHandler.createChannel { childChannel, channelType in
-                timeout.cancel()
-                guard !didResume else { return childChannel.close().map { _ in () } }
-                print("[SSH] openShell: channel type=\(channelType)")
-                guard channelType == .session else {
-                    return childChannel.eventLoop.makeFailedFuture(
-                        SSHClientError.connectionFailed("Unexpected channel type")
-                    )
-                }
-                return childChannel.eventLoop.makeCompletedFuture {
-                    _ = childChannel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
-                    do {
-                        let shell = InteractiveShellHandler(
-                            continuation: cont,
-                            allocator: childChannel.allocator
+            channel.eventLoop.execute {
+                sshHandler.createChannel { childChannel, channelType in
+                    timeout.cancel()
+                    guard !didResume else { return childChannel.close().map { _ in () } }
+                    print("[SSH] openShell: channel type=\(channelType)")
+                    guard channelType == .session else {
+                        return childChannel.eventLoop.makeFailedFuture(
+                            SSHClientError.connectionFailed("Unexpected channel type")
                         )
-                        try childChannel.pipeline.syncOperations.addHandler(shell)
-                        print("[SSH] openShell: shell handler added")
-                    } catch {
-                        guard !didResume else { return }
-                        didResume = true
-                        cont.resume(throwing: error)
+                    }
+                    return childChannel.eventLoop.makeCompletedFuture {
+                        _ = childChannel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
+                        do {
+                            let shell = InteractiveShellHandler(
+                                continuation: cont,
+                                allocator: childChannel.allocator,
+                                cols: 80,
+                                rows: 24
+                            )
+                            try childChannel.pipeline.syncOperations.addHandler(shell)
+                            print("[SSH] openShell: shell handler added")
+                        } catch {
+                            guard !didResume else { return }
+                            didResume = true
+                            cont.resume(throwing: error)
+                        }
                     }
                 }
             }
@@ -198,26 +195,28 @@ final class SwiftNIOSSHClient: SSHClient {
                 print("[SSH] execute: timed out waiting for channel")
                 cont.resume(throwing: SSHClientError.connectionFailed("Command timed out"))
             }
-            sshHandler.createChannel { childChannel, channelType in
-                timeout.cancel()
-                guard !didResume else { return childChannel.close().map { _ in () } }
-                print("[SSH] execute: channel type=\(channelType)")
-                guard channelType == .session else {
-                    return childChannel.eventLoop.makeFailedFuture(
-                        SSHClientError.connectionFailed("Unexpected channel type")
-                    )
-                }
-                return childChannel.eventLoop.makeCompletedFuture {
-                    _ = childChannel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
-                    do {
-                        try childChannel.pipeline.syncOperations.addHandler(
-                            ExecCommandHandler(command: command, continuation: cont, allocator: childChannel.allocator)
+            channel.eventLoop.execute {
+                sshHandler.createChannel { childChannel, channelType in
+                    timeout.cancel()
+                    guard !didResume else { return childChannel.close().map { _ in () } }
+                    print("[SSH] execute: channel type=\(channelType)")
+                    guard channelType == .session else {
+                        return childChannel.eventLoop.makeFailedFuture(
+                            SSHClientError.connectionFailed("Unexpected channel type")
                         )
-                        print("[SSH] execute: exec handler added")
-                    } catch {
-                        guard !didResume else { return }
-                        didResume = true
-                        cont.resume(throwing: error)
+                    }
+                    return childChannel.eventLoop.makeCompletedFuture {
+                        _ = childChannel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
+                        do {
+                            try childChannel.pipeline.syncOperations.addHandler(
+                                ExecCommandHandler(command: command, continuation: cont, allocator: childChannel.allocator)
+                            )
+                            print("[SSH] execute: exec handler added")
+                        } catch {
+                            guard !didResume else { return }
+                            didResume = true
+                            cont.resume(throwing: error)
+                        }
                     }
                 }
             }
@@ -282,12 +281,6 @@ final class ExecCommandHandler: ChannelDuplexHandler {
 
 // MARK: - Interactive Shell Handler
 
-final actor ShellOutputActor {
-    private var buffer = ""
-    func append(_ text: String) { buffer += text }
-    func drain() -> String { let b = buffer; buffer = ""; return b }
-}
-
 final class InteractiveShellHandler: ChannelDuplexHandler {
     typealias InboundIn = SSHChannelData
     typealias InboundOut = Never
@@ -296,21 +289,40 @@ final class InteractiveShellHandler: ChannelDuplexHandler {
 
     private let continuation: CheckedContinuation<SSHSession, Error>
     private let allocator: ByteBufferAllocator
-    private let outputActor = ShellOutputActor()
+    private let initialCols: Int
+    private let initialRows: Int
     private var didResume = false
+    private weak var session: ShellChannelSession?
 
-    init(continuation: CheckedContinuation<SSHSession, Error>, allocator: ByteBufferAllocator) {
+    init(continuation: CheckedContinuation<SSHSession, Error>, allocator: ByteBufferAllocator, cols: Int, rows: Int) {
         self.continuation = continuation
         self.allocator = allocator
+        self.initialCols = cols
+        self.initialRows = rows
     }
 
     func handlerAdded(context: ChannelHandlerContext) {
+        let channel = context.channel
+        guard let parentChannel = channel.parent else {
+            guard !didResume else { return }
+            didResume = true
+            continuation.resume(throwing: SSHClientError.connectionFailed("Shell channel has no parent"))
+            return
+        }
+
+        let session = ShellChannelSession(
+            channel: channel,
+            parentChannel: parentChannel,
+            allocator: allocator
+        )
+        self.session = session
+
         context.triggerUserOutboundEvent(
             SSHChannelRequestEvent.PseudoTerminalRequest(
                 wantReply: true,
                 term: "xterm-256color",
-                terminalCharacterWidth: 80,
-                terminalRowHeight: 24,
+                terminalCharacterWidth: initialCols,
+                terminalRowHeight: initialRows,
                 terminalPixelWidth: 0,
                 terminalPixelHeight: 0,
                 terminalModes: SSHTerminalModes([:])
@@ -323,70 +335,80 @@ final class InteractiveShellHandler: ChannelDuplexHandler {
             promise: nil
         )
 
-        Task {
-            try? await Task.sleep(nanoseconds: 800_000_000)
-            guard !self.didResume else { return }
-            self.didResume = true
-            let initial = await self.outputActor.drain()
-            let session = ShellChannelSession(
-                channel: context.channel,
-                parentChannel: context.channel.parent!,
-                allocator: self.allocator,
-                outputActor: self.outputActor,
-                banner: initial
-            )
-            self.continuation.resume(returning: session)
-        }
+        guard !didResume else { return }
+        didResume = true
+        continuation.resume(returning: session)
     }
 
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let channelData = unwrapInboundIn(data)
-        guard case .byteBuffer(let bytes) = channelData.data else { return }
-        Task { await outputActor.append(String(buffer: bytes)) }
+        guard case .byteBuffer(let bytes) = channelData.data, bytes.readableBytes > 0 else { return }
+        let chunk = Array(buffer: bytes)
+        DispatchQueue.main.async { [weak self] in
+            self?.session?.onOutput?(chunk)
+        }
+    }
+
+    func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
+        if let exitStatus = event as? SSHChannelRequestEvent.ExitStatus {
+            DispatchQueue.main.async { [weak self] in
+                self?.session?.onOutput?(Array("[exit: \(exitStatus.exitStatus)]\n".utf8))
+            }
+        }
+    }
+
+    func channelInactive(context: ChannelHandlerContext) {
+        DispatchQueue.main.async { [weak self] in
+            self?.session?.onDisconnect?()
+        }
     }
 
     func errorCaught(context: ChannelHandlerContext, error: Error) {
-        guard !didResume else { return }
-        didResume = true
-        continuation.resume(throwing: error)
+        if !didResume {
+            didResume = true
+            continuation.resume(throwing: error)
+        }
         context.close(promise: nil)
     }
 }
 
 final class ShellChannelSession: SSHSession {
-    let banner: String
-    private var channel: Channel?
-    private var parentChannel: Channel?
-    private let allocator: ByteBufferAllocator
-    private let outputActor: ShellOutputActor
+    var onOutput: (@Sendable ([UInt8]) -> Void)?
+    var onDisconnect: (@Sendable () -> Void)?
 
-    init(channel: Channel, parentChannel: Channel, allocator: ByteBufferAllocator, outputActor: ShellOutputActor, banner: String) {
+    private let channel: Channel
+    private let parentChannel: Channel
+    private let allocator: ByteBufferAllocator
+
+    init(channel: Channel, parentChannel: Channel, allocator: ByteBufferAllocator) {
         self.channel = channel
         self.parentChannel = parentChannel
         self.allocator = allocator
-        self.outputActor = outputActor
-        self.banner = banner
     }
 
-    func send(_ input: String) async throws -> String {
-        guard let channel = channel else {
-            throw SSHClientError.connectionFailed("Session closed")
-        }
-
-        let data = SSHChannelData(
-            type: .channel,
-            data: .byteBuffer(allocator.buffer(string: input + "\n"))
-        )
+    func send(_ bytes: [UInt8]) async throws {
+        var buffer = allocator.buffer(capacity: bytes.count)
+        buffer.writeBytes(bytes)
+        let data = SSHChannelData(type: .channel, data: .byteBuffer(buffer))
         try await channel.writeAndFlush(data)
-        try await Task.sleep(nanoseconds: 400_000_000)
-        return await outputActor.drain()
+    }
+
+    func resize(cols: Int, rows: Int) async {
+        guard cols > 0, rows > 0 else { return }
+        channel.eventLoop.execute {
+            let event = SSHChannelRequestEvent.WindowChangeRequest(
+                terminalCharacterWidth: cols,
+                terminalRowHeight: rows,
+                terminalPixelWidth: 0,
+                terminalPixelHeight: 0
+            )
+            self.channel.triggerUserOutboundEvent(event, promise: nil)
+        }
     }
 
     func disconnect() async {
-        try? await channel?.close()
-        channel = nil
-        try? await parentChannel?.close()
-        parentChannel = nil
+        try? await channel.close()
+        try? await parentChannel.close()
     }
 }
 

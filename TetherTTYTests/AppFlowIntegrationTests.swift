@@ -104,28 +104,25 @@ final class AppFlowIntegrationTests: XCTestCase {
         XCTAssertEqual(sessionRequest.connection.id, connection.id)
         XCTAssertEqual(sessionRequest.startupCommand, "tmux attach-session -t shell")
 
+        let stubSession = StubSSHSession()
         let terminalVM = PlainTerminalViewModel(
             request: sessionRequest,
-            sshClient: StubSSHClient(session: StubSSHSession())
+            sshClient: StubSSHClient(session: stubSession)
         )
 
         XCTAssertEqual(terminalVM.state, TerminalConnectionState.idle)
-        XCTAssertTrue(terminalVM.transcript.isEmpty)
 
         await terminalVM.connect()
 
         XCTAssertEqual(terminalVM.state, TerminalConnectionState.terminalOpen)
-        XCTAssertTrue(terminalVM.transcript.contains("tmux attach-session -t shell"))
+        XCTAssertNotNil(terminalVM.session)
 
-        terminalVM.input = "ls -la"
-        await terminalVM.sendCurrentInput()
-        XCTAssertTrue(terminalVM.transcript.contains("ls -la"))
-        XCTAssertTrue(terminalVM.transcript.contains("stub output for ls -la"))
-        XCTAssertEqual(terminalVM.input, "")
+        let expectedStartup = Array("tmux attach-session -t shell\n".utf8)
+        XCTAssertEqual(stubSession.sentBytes, expectedStartup)
 
         await terminalVM.disconnect()
         XCTAssertEqual(terminalVM.state, TerminalConnectionState.disconnected)
-        XCTAssertTrue(terminalVM.transcript.contains("[disconnected]"))
+        XCTAssertNil(terminalVM.session)
 
         let reconnectRequest = terminalVM.makeReconnectRequest()
         XCTAssertEqual(reconnectRequest.connection.id, connection.id)

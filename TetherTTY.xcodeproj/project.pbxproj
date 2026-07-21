@@ -40,6 +40,7 @@
 		B20000000000000000000006 /* TmuxSessionParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000007 /* TmuxSessionParserTests.swift */; };
 		A20000000000000000000026 /* HerdrSessionParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000027 /* HerdrSessionParser.swift */; };
 		A20000000000000000000027 /* HerdrSessionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000028 /* HerdrSessionProvider.swift */; };
+		A20000000000000000000028 /* SSHTerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000029 /* SSHTerminalView.swift */; };
 		B20000000000000000000007 /* HerdrSessionParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000008 /* HerdrSessionParserTests.swift */; };
 		B20000000000000000000008 /* AppFlowIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000009 /* AppFlowIntegrationTests.swift */; };
 		P30000000000000000000001 /* NIOSSH in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000001 /* NIOSSH */; };
@@ -93,6 +94,7 @@
 		B10000000000000000000007 /* TmuxSessionParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TmuxSessionParserTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000027 /* HerdrSessionParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HerdrSessionParser.swift; sourceTree = "<group>"; };
 		A10000000000000000000028 /* HerdrSessionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HerdrSessionProvider.swift; sourceTree = "<group>"; };
+		A10000000000000000000029 /* SSHTerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHTerminalView.swift; sourceTree = "<group>"; };
 		B10000000000000000000008 /* HerdrSessionParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HerdrSessionParserTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000009 /* AppFlowIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFlowIntegrationTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -242,6 +244,7 @@
 				A10000000000000000000012 /* ConnectionEditorView.swift */,
 				A10000000000000000000018 /* PlainTerminalView.swift */,
 				A10000000000000000000026 /* SessionPickerView.swift */,
+				A10000000000000000000029 /* SSHTerminalView.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -281,6 +284,7 @@
 				P20000000000000000000001 /* NIOSSH */,
 				P20000000000000000000002 /* NIOCore */,
 				P20000000000000000000003 /* NIOPosix */,
+				P20000000000000000000004 /* SwiftTerm */,
 			);
 			productName = TetherTTY;
 			productReference = A10000000000000000000007 /* TetherTTY.app */;
@@ -302,6 +306,7 @@
 			name = TetherTTYTests;
 			packageProductDependencies = (
 				P20000000000000000000001 /* NIOSSH */,
+				P20000000000000000000004 /* SwiftTerm */,
 			);
 			productName = TetherTTYTests;
 			productReference = B10000000000000000000002 /* TetherTTYTests.xctest */;
@@ -345,6 +350,7 @@
 			);
 			packageReferences = (
 				P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh.git" */,
+				P10000000000000000000002 /* XCRemoteSwiftPackageReference "SwiftTerm.git" */,
 			);
 		};
 /* End PBXProject section */
@@ -398,6 +404,7 @@
 				A20000000000000000000025 /* SessionPickerView.swift in Sources */,
 				A20000000000000000000026 /* HerdrSessionParser.swift in Sources */,
 				A20000000000000000000027 /* HerdrSessionProvider.swift in Sources */,
+				A20000000000000000000028 /* SSHTerminalView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -675,6 +682,14 @@
                 minimumVersion = 0.14.1;
             };
         };
+        P10000000000000000000002 /* XCRemoteSwiftPackageReference "SwiftTerm.git" */ = {
+            isa = XCRemoteSwiftPackageReference;
+            repositoryURL = "https://github.com/migueldeicaza/SwiftTerm.git";
+            requirement = {
+                kind = upToNextMajorVersion;
+                minimumVersion = 1.15.0;
+            };
+        };
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -692,6 +707,11 @@
             isa = XCSwiftPackageProductDependency;
             package = P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh.git" */;
             productName = NIOPosix;
+        };
+        P20000000000000000000004 /* SwiftTerm */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = P10000000000000000000002 /* XCRemoteSwiftPackageReference "SwiftTerm.git" */;
+            productName = SwiftTerm;
         };
 /* End XCSwiftPackageProductDependency section */
 	};
