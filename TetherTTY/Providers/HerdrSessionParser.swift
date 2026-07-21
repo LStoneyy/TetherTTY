@@ -34,6 +34,7 @@ struct HerdrSessionParser {
         let status = (object["status"] as? String)
             ?? (object["state"] as? String)
             ?? ((object["attached"] as? Bool).map { $0 ? "attached" : "detached" })
+            ?? ((object["running"] as? Bool).map { $0 ? "running" : "stopped" })
             ?? "session"
 
         let metadata = (object["label"] as? String) ?? (object["title"] as? String)

@@ -72,30 +72,26 @@ final class AppFlowIntegrationTests: XCTestCase {
         )
 
         XCTAssertTrue(sessionPickerVM.isLoading)
-        XCTAssertTrue(sessionPickerVM.sessions.isEmpty)
+        XCTAssertTrue(sessionPickerVM.tmuxSessions.isEmpty)
+        XCTAssertTrue(sessionPickerVM.herdrSessions.isEmpty)
         XCTAssertNil(sessionPickerVM.errorMessage)
+        XCTAssertNil(sessionPickerVM.tmuxDiagnostic)
+        XCTAssertNil(sessionPickerVM.herdrDiagnostic)
 
         await sessionPickerVM.fetchSessions()
 
         XCTAssertFalse(sessionPickerVM.isLoading)
         XCTAssertNil(sessionPickerVM.errorMessage)
+        XCTAssertNil(sessionPickerVM.tmuxDiagnostic)
+        XCTAssertNil(sessionPickerVM.herdrDiagnostic)
         XCTAssertEqual(sessionPickerVM.sessions.count, 5)
+        XCTAssertEqual(sessionPickerVM.tmuxSessions.count, 2)
+        XCTAssertEqual(sessionPickerVM.herdrSessions.count, 2)
 
-        let tmuxSessions = sessionPickerVM.sessions.filter {
-            if case .tmux = $0.provider { return true }
-            return false
-        }
-        XCTAssertEqual(tmuxSessions.count, 2)
-        XCTAssertEqual(tmuxSessions.first?.displayName, "shell")
+        XCTAssertEqual(sessionPickerVM.tmuxSessions.first?.displayName, "shell")
+        XCTAssertEqual(sessionPickerVM.herdrSessions.first?.displayName, "prod")
 
-        let herdrSessions = sessionPickerVM.sessions.filter {
-            if case .herdr = $0.provider { return true }
-            return false
-        }
-        XCTAssertEqual(herdrSessions.count, 2)
-        XCTAssertEqual(herdrSessions.first?.displayName, "prod")
-
-        guard let tmuxSession = tmuxSessions.first else {
+        guard let tmuxSession = sessionPickerVM.tmuxSessions.first else {
             XCTFail("Expected at least one tmux session")
             return
         }

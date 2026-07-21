@@ -3,6 +3,12 @@ import Foundation
 @preconcurrency import NIOPosix
 @preconcurrency import NIOSSH
 
+struct SSHExecResult: Equatable {
+    let stdout: String
+    let stderr: String
+    let exitStatus: Int
+}
+
 struct SSHShellRequest: Equatable {
     let host: String
     let port: Int
@@ -12,7 +18,7 @@ struct SSHShellRequest: Equatable {
 
 protocol SSHClient {
     func openShell(_ request: SSHShellRequest) async throws -> SSHSession
-    func execute(_ request: SSHShellRequest, command: String) async throws -> String
+    func execute(_ request: SSHShellRequest, command: String) async throws -> SSHExecResult
 }
 
 protocol SSHSession {
@@ -41,6 +47,8 @@ enum SSHClientError: LocalizedError, Equatable {
 }
 
 struct SimulatedSSHClient: SSHClient {
+    var executeHandler: ((SSHShellRequest, String) async throws -> SSHExecResult)?
+
     func openShell(_ request: SSHShellRequest) async throws -> SSHSession {
         try await Task.sleep(nanoseconds: 250_000_000)
 
@@ -51,9 +59,12 @@ struct SimulatedSSHClient: SSHClient {
         return SimulatedSSHSession()
     }
 
-    func execute(_ request: SSHShellRequest, command: String) async throws -> String {
+    func execute(_ request: SSHShellRequest, command: String) async throws -> SSHExecResult {
         try await Task.sleep(nanoseconds: 200_000_000)
-        return "simulated output for: \(command)\n"
+        if let handler = executeHandler {
+            return try await handler(request, command)
+        }
+        return SSHExecResult(stdout: "simulated output for: \(command)\n", stderr: "", exitStatus: 0)
     }
 }
 
@@ -154,7 +165,7 @@ final class SwiftNIOSSHClient: SSHClient {
         }
     }
 
-    func execute(_ request: SSHShellRequest, command: String) async throws -> String {
+    func execute(_ request: SSHShellRequest, command: String) async throws -> SSHExecResult {
         guard !request.password.isEmpty else {
             throw SSHClientError.missingPassword
         }
@@ -187,7 +198,7 @@ final class SwiftNIOSSHClient: SSHClient {
 
         print("[SSH] execute: connected, creating exec channel...")
 
-        let result: String = try await withCheckedThrowingContinuation { cont in
+        let result: SSHExecResult = try await withCheckedThrowingContinuation { cont in
             var didResume = false
             let timeout = channel.eventLoop.scheduleTask(in: .seconds(8)) {
                 guard !didResume else { return }
@@ -238,10 +249,10 @@ final class ExecCommandHandler: ChannelDuplexHandler {
     private let command: String
     private var output = ByteBuffer()
     private var errorOutput = ByteBuffer()
-    private let continuation: CheckedContinuation<String, Error>
+    private let continuation: CheckedContinuation<SSHExecResult, Error>
     private var didResume = false
 
-    init(command: String, continuation: CheckedContinuation<String, Error>, allocator: ByteBufferAllocator) {
+    init(command: String, continuation: CheckedContinuation<SSHExecResult, Error>, allocator: ByteBufferAllocator) {
         self.command = command
         self.continuation = continuation
         self.output = allocator.buffer(capacity: 4096)
@@ -270,12 +281,24 @@ final class ExecCommandHandler: ChannelDuplexHandler {
 
     func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
         switch event {
-        case _ as SSHChannelRequestEvent.ExitStatus, _ as SSHChannelRequestEvent.ExitSignal:
+        case let exitStatus as SSHChannelRequestEvent.ExitStatus:
             guard !didResume else { return }
             didResume = true
-            let stdout = String(buffer: output)
-            let result = stdout.isEmpty ? String(buffer: errorOutput) : stdout
+            let result = SSHExecResult(
+                stdout: String(buffer: output),
+                stderr: String(buffer: errorOutput),
+                exitStatus: exitStatus.exitStatus
+            )
             continuation.resume(returning: result)
+            context.close(promise: nil)
+        case _ as SSHChannelRequestEvent.ExitSignal:
+            guard !didResume else { return }
+            didResume = true
+            continuation.resume(returning: SSHExecResult(
+                stdout: String(buffer: output),
+                stderr: String(buffer: errorOutput),
+                exitStatus: -1
+            ))
             context.close(promise: nil)
         default:
             context.fireUserInboundEventTriggered(event)

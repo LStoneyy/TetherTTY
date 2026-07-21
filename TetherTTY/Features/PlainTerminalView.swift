@@ -77,6 +77,12 @@ struct PlainTerminalView: View {
                 await session.resize(cols: cols, rows: rows)
             }
         }
+        let current = terminal.getTerminal()
+        if current.cols > 0, current.rows > 0 {
+            Task { @MainActor in
+                await session.resize(cols: current.cols, rows: current.rows)
+            }
+        }
     }
 
     private var disconnectedFooter: some View {

@@ -24,25 +24,37 @@ struct SessionPickerView: View {
 
                     if viewModel.isLoading {
                         loadingState
-                    } else if let errorMessage = viewModel.errorMessage, tmuxSessions.isEmpty && herdrSessions.isEmpty {
+                    } else if let errorMessage = viewModel.errorMessage, viewModel.tmuxSessions.isEmpty && viewModel.herdrSessions.isEmpty {
                         errorState(message: errorMessage)
                     } else {
-                        if !tmuxSessions.isEmpty {
+                        if !viewModel.tmuxSessions.isEmpty {
                             sectionHeader(title: "Tmux Sessions")
-                            ForEach(tmuxSessions) { session in
+                            ForEach(viewModel.tmuxSessions) { session in
                                 sessionCard(for: session)
                             }
                         }
 
-                        if !herdrSessions.isEmpty {
+                        if let diagnostic = viewModel.tmuxDiagnostic {
+                            diagnosticBanner(message: diagnostic, provider: "tmux")
+                        }
+
+                        if !viewModel.herdrSessions.isEmpty {
                             sectionHeader(title: "Herdr Sessions")
-                            ForEach(herdrSessions) { session in
+                            ForEach(viewModel.herdrSessions) { session in
                                 sessionCard(for: session)
                             }
+                        }
+
+                        if let diagnostic = viewModel.herdrDiagnostic {
+                            diagnosticBanner(message: diagnostic, provider: "Herdr")
                         }
 
                         if let herdrError = viewModel.herdrErrorMessage {
                             herdrErrorBanner(message: herdrError)
+                        }
+
+                        if viewModel.tmuxSessions.isEmpty && viewModel.herdrSessions.isEmpty {
+                            emptyState
                         }
 
                         plainShellSection
@@ -63,20 +75,6 @@ struct SessionPickerView: View {
         }
         .task {
             await viewModel.fetchSessions()
-        }
-    }
-
-    private var tmuxSessions: [TerminalSession] {
-        viewModel.sessions.filter {
-            if case .tmux = $0.provider { return true }
-            return false
-        }
-    }
-
-    private var herdrSessions: [TerminalSession] {
-        viewModel.sessions.filter {
-            if case .herdr = $0.provider { return true }
-            return false
         }
     }
 
@@ -139,6 +137,45 @@ struct SessionPickerView: View {
             sectionHeader(title: "Fallback")
             sessionCard(for: .plainShellSession)
         }
+    }
+
+    private func diagnosticBanner(message: String, provider: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "info.circle")
+                .font(.system(size: 12))
+                .foregroundStyle(AbyssalTheme.pacificCyan)
+
+            Text("\(provider): \(message)")
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(AbyssalTheme.bone.opacity(0.55))
+        }
+        .padding(10)
+        .background(AbyssCardBackground())
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 14) {
+            Text("Keine Sessions gefunden")
+                .font(.system(.subheadline, design: .rounded))
+                .foregroundStyle(AbyssalTheme.bone.opacity(0.55))
+
+            if viewModel.tmuxDiagnostic != nil || viewModel.herdrDiagnostic != nil {
+                Text("Weitere Informationen oben.")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(AbyssalTheme.bone.opacity(0.4))
+            }
+
+            Button {
+                Task { await viewModel.fetchSessions() }
+            } label: {
+                Label("Erneut versuchen", systemImage: "arrow.clockwise")
+                    .font(.system(.caption, design: .rounded, weight: .medium))
+                    .foregroundStyle(AbyssalTheme.pacificCyan)
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 24)
     }
 
     private func herdrErrorBanner(message: String) -> some View {

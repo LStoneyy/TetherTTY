@@ -2,10 +2,17 @@ import Foundation
 
 @MainActor
 final class SessionPickerViewModel: ObservableObject {
-    @Published private(set) var sessions: [TerminalSession] = []
+    @Published private(set) var tmuxSessions: [TerminalSession] = []
+    @Published private(set) var herdrSessions: [TerminalSession] = []
     @Published private(set) var isLoading = true
     @Published var errorMessage: String?
     @Published var herdrErrorMessage: String?
+    @Published var tmuxDiagnostic: String?
+    @Published var herdrDiagnostic: String?
+
+    var sessions: [TerminalSession] {
+        tmuxSessions + herdrSessions + [.plainShellSession]
+    }
 
     private let request: TerminalConnectionRequest
     private let tmuxProvider: TmuxSessionProvider
@@ -25,30 +32,28 @@ final class SessionPickerViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         herdrErrorMessage = nil
+        tmuxDiagnostic = nil
+        herdrDiagnostic = nil
 
         let tmuxTask = Task { try await tmuxProvider.fetchSessions(for: request) }
         let herdrTask = Task { try await herdrProvider.fetchSessions(for: request) }
 
-        var tmuxSessions: [TerminalSession] = []
-        var herdrSessions: [TerminalSession] = []
-
         switch await tmuxTask.result {
-        case .success(let sessions):
-            tmuxSessions = sessions
+        case .success(let result):
+            tmuxSessions = result.0
+            tmuxDiagnostic = result.1
         case .failure(let error):
             errorMessage = error.localizedDescription
         }
 
         switch await herdrTask.result {
-        case .success(let sessions):
-            herdrSessions = sessions
+        case .success(let result):
+            herdrSessions = result.0
+            herdrDiagnostic = result.1
         case .failure(let error):
             herdrErrorMessage = error.localizedDescription
         }
 
-        var combined = tmuxSessions + herdrSessions
-        combined.append(.plainShellSession)
-        sessions = combined
         isLoading = false
     }
 

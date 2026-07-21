@@ -124,8 +124,8 @@ struct StubSSHClient: SSHClient {
         session
     }
 
-    func execute(_ request: SSHShellRequest, command: String) async throws -> String {
-        "stub output for: \(command)\n"
+    func execute(_ request: SSHShellRequest, command: String) async throws -> SSHExecResult {
+        SSHExecResult(stdout: "stub output for: \(command)\n", stderr: "", exitStatus: 0)
     }
 }
 
@@ -134,7 +134,7 @@ private struct FailingSSHClient: SSHClient {
         throw SSHClientError.connectionFailed("No route to host")
     }
 
-    func execute(_ request: SSHShellRequest, command: String) async throws -> String {
+    func execute(_ request: SSHShellRequest, command: String) async throws -> SSHExecResult {
         throw SSHClientError.connectionFailed("No route to host")
     }
 }

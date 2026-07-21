@@ -5,13 +5,22 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate {
     var onSizeChanged: ((Int, Int) -> Void)?
     var onSend: (([UInt8]) -> Void)?
 
+    private static let terminalBg = UIColor(red: 0.04, green: 0.04, blue: 0.08, alpha: 1.0)
+    private static let terminalFg = UIColor(red: 0.95, green: 0.95, blue: 0.90, alpha: 1.0)
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         terminalDelegate = self
         font = UIFont.monospacedSystemFont(ofSize: 14, weight: .regular)
-        nativeBackgroundColor = UIColor(red: 0.04, green: 0.04, blue: 0.08, alpha: 1.0)
-        nativeForegroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.90, alpha: 1.0)
-        isOpaque = true
+        nativeBackgroundColor = Self.terminalBg
+        layer.backgroundColor = Self.terminalBg.cgColor
+        nativeForegroundColor = Self.terminalFg
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        nativeBackgroundColor = Self.terminalBg
+        layer.backgroundColor = Self.terminalBg.cgColor
     }
 
     required init?(coder: NSCoder) {
