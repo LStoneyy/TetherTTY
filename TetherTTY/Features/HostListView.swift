@@ -37,8 +37,10 @@ struct HostListView: View {
                                 connection: connection,
                                 hasPassword: viewModel.hasPassword(for: connection),
                                 connect: {
-                                    if let request = viewModel.terminalRequest(for: connection) {
-                                        terminalFlow = .sessionPicker(request)
+                                    Task {
+                                        if let request = await viewModel.terminalRequest(for: connection) {
+                                            terminalFlow = .sessionPicker(request)
+                                        }
                                     }
                                 },
                                 edit: { editorDraft = ConnectionDraft(connection: connection) },

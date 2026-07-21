@@ -42,6 +42,9 @@
 		A20000000000000000000027 /* HerdrSessionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000028 /* HerdrSessionProvider.swift */; };
 		B20000000000000000000007 /* HerdrSessionParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000008 /* HerdrSessionParserTests.swift */; };
 		B20000000000000000000008 /* AppFlowIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000009 /* AppFlowIntegrationTests.swift */; };
+		P30000000000000000000001 /* NIOSSH in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000001 /* NIOSSH */; };
+		P30000000000000000000002 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000002 /* NIOCore */; };
+		P30000000000000000000003 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000003 /* NIOPosix */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -102,6 +105,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				P30000000000000000000001 /* NIOSSH in Frameworks */,
+				P30000000000000000000002 /* NIOCore in Frameworks */,
+				P30000000000000000000003 /* NIOPosix in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -109,6 +115,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				P30000000000000000000001 /* NIOSSH in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -270,6 +277,11 @@
 			dependencies = (
 			);
 			name = TetherTTY;
+			packageProductDependencies = (
+				P20000000000000000000001 /* NIOSSH */,
+				P20000000000000000000002 /* NIOCore */,
+				P20000000000000000000003 /* NIOPosix */,
+			);
 			productName = TetherTTY;
 			productReference = A10000000000000000000007 /* TetherTTY.app */;
 			productType = "com.apple.product-type.application";
@@ -288,6 +300,9 @@
 				B30000000000000000000003 /* PBXTargetDependency */,
 			);
 			name = TetherTTYTests;
+			packageProductDependencies = (
+				P20000000000000000000001 /* NIOSSH */,
+			);
 			productName = TetherTTYTests;
 			productReference = B10000000000000000000002 /* TetherTTYTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -327,6 +342,9 @@
 			targets = (
 				A1B2C3D4E5F6071829304050 /* TetherTTY */,
 				B1B2C3D4E5F6071829304050 /* TetherTTYTests */,
+			);
+			packageReferences = (
+				P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh.git" */,
 			);
 		};
 /* End PBXProject section */
@@ -647,6 +665,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+        P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh.git" */ = {
+            isa = XCRemoteSwiftPackageReference;
+            repositoryURL = "https://github.com/apple/swift-nio-ssh.git";
+            requirement = {
+                kind = upToNextMajorVersion;
+                minimumVersion = 0.14.1;
+            };
+        };
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+        P20000000000000000000001 /* NIOSSH */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh.git" */;
+            productName = NIOSSH;
+        };
+        P20000000000000000000002 /* NIOCore */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh.git" */;
+            productName = NIOCore;
+        };
+        P20000000000000000000003 /* NIOPosix */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh.git" */;
+            productName = NIOPosix;
+        };
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C10000000000000000000001 /* Project object */;
 }

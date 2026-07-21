@@ -10,7 +10,7 @@ final class PlainTerminalViewModel: ObservableObject {
     private let sshClient: SSHClient
     private var session: SSHSession?
 
-    init(request: TerminalConnectionRequest, sshClient: SSHClient = SimulatedSSHClient()) {
+    init(request: TerminalConnectionRequest, sshClient: SSHClient = SwiftNIOSSHClient()) {
         self.request = request
         self.sshClient = sshClient
     }
@@ -32,6 +32,11 @@ final class PlainTerminalViewModel: ObservableObject {
                     password: request.password
                 )
             )
+
+            if state == .disconnected {
+                await shell.disconnect()
+                return
+            }
 
             session = shell
             transcript = shell.banner

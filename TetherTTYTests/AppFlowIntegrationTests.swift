@@ -49,7 +49,7 @@ final class AppFlowIntegrationTests: XCTestCase {
         XCTAssertEqual(hostListVM.connections.first?.alias, "Dev Machine")
         XCTAssertTrue(hostListVM.hasPassword(for: connection))
 
-        let terminalRequest = hostListVM.terminalRequest(for: connection)
+        let terminalRequest = await hostListVM.terminalRequest(for: connection)
         XCTAssertNil(terminalRequest)
         XCTAssertNotNil(hostListVM.hostKeyChallenge)
         XCTAssertEqual(hostListVM.hostKeyChallenge?.connection.id, connection.id)
@@ -149,7 +149,7 @@ final class AppFlowIntegrationTests: XCTestCase {
             hostKeyTrustEvaluator: hostKeyEvaluator
         )
 
-        let request = hostListVM.terminalRequest(for: connection)
+        let request = await hostListVM.terminalRequest(for: connection)
         XCTAssertNil(request)
         XCTAssertNotNil(hostListVM.errorMessage)
         XCTAssertTrue(hostListVM.errorMessage?.contains("Host key changed") ?? false)
@@ -169,7 +169,7 @@ final class AppFlowIntegrationTests: XCTestCase {
             hostKeyTrustEvaluator: hostKeyEvaluator
         )
 
-        let request = hostListVM.terminalRequest(for: connection)
+        let request = await hostListVM.terminalRequest(for: connection)
         XCTAssertNil(request)
         XCTAssertEqual(hostListVM.errorMessage, SSHClientError.missingPassword.localizedDescription)
     }

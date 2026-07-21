@@ -35,3 +35,41 @@ struct SimulatedHerdrSessionProvider: HerdrSessionProvider {
         ]
     }
 }
+
+struct RealHerdrSessionProvider: HerdrSessionProvider {
+    let sshClient: SSHClient
+
+    init(sshClient: SSHClient = SwiftNIOSSHClient()) {
+        self.sshClient = sshClient
+    }
+
+    func fetchSessions(for request: TerminalConnectionRequest) async throws -> [TerminalSession] {
+        let requestConfig = SSHShellRequest(
+            host: request.connection.host,
+            port: request.connection.port,
+            username: request.connection.username,
+            password: request.password
+        )
+
+        let commands = [
+            "herdr list",
+            "herdr status"
+        ]
+
+        var allSessions: [TerminalSession] = []
+        for cmd in commands {
+            do {
+                let output = try await sshClient.execute(requestConfig, command: cmd)
+                let sessions = HerdrSessionParser.parse(output)
+                if !sessions.isEmpty {
+                    allSessions.append(contentsOf: sessions)
+                    break
+                }
+            } catch {
+                continue
+            }
+        }
+
+        return allSessions
+    }
+}

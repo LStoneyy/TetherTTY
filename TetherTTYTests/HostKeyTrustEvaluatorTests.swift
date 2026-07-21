@@ -2,13 +2,13 @@ import XCTest
 @testable import TetherTTY
 
 final class HostKeyTrustEvaluatorTests: XCTestCase {
-    func testUnknownHostReturnsTrustChallenge() throws {
+    func testUnknownHostReturnsTrustChallenge() async throws {
         let evaluator = HostKeyTrustEvaluator(
             knownHostStore: InMemoryKnownHostStore(),
             fingerprintResolver: FixedFingerprintResolver(fingerprint: "SHA256:first")
         )
 
-        let decision = try evaluator.evaluate(connection: connection(), password: "secret")
+        let decision = try await evaluator.evaluate(connection: connection(), password: "secret")
 
         guard case .unknown(let challenge) = decision else {
             return XCTFail("Expected unknown host challenge")
@@ -19,7 +19,7 @@ final class HostKeyTrustEvaluatorTests: XCTestCase {
         XCTAssertEqual(challenge.fingerprint, "SHA256:first")
     }
 
-    func testTrustedHostAllowsConnection() throws {
+    func testTrustedHostAllowsConnection() async throws {
         let store = InMemoryKnownHostStore()
         try store.trustHost(host: "192.0.2.42", port: 22, fingerprint: "SHA256:first")
         let evaluator = HostKeyTrustEvaluator(
@@ -27,12 +27,12 @@ final class HostKeyTrustEvaluatorTests: XCTestCase {
             fingerprintResolver: FixedFingerprintResolver(fingerprint: "SHA256:first")
         )
 
-        let decision = try evaluator.evaluate(connection: connection(), password: "secret")
+        let decision = try await evaluator.evaluate(connection: connection(), password: "secret")
 
         XCTAssertEqual(decision, .trusted)
     }
 
-    func testChangedHostKeyBlocksConnection() throws {
+    func testChangedHostKeyBlocksConnection() async throws {
         let store = InMemoryKnownHostStore()
         try store.trustHost(host: "192.0.2.42", port: 22, fingerprint: "SHA256:first")
         let evaluator = HostKeyTrustEvaluator(
@@ -40,7 +40,7 @@ final class HostKeyTrustEvaluatorTests: XCTestCase {
             fingerprintResolver: FixedFingerprintResolver(fingerprint: "SHA256:changed")
         )
 
-        let decision = try evaluator.evaluate(connection: connection(), password: "secret")
+        let decision = try await evaluator.evaluate(connection: connection(), password: "secret")
 
         XCTAssertEqual(decision, .changed(expected: "SHA256:first", actual: "SHA256:changed"))
     }
@@ -68,7 +68,7 @@ final class HostKeyTrustEvaluatorTests: XCTestCase {
 struct FixedFingerprintResolver: HostKeyFingerprintResolver {
     let fingerprint: String
 
-    func fingerprint(for connection: Connection) throws -> String {
+    func fingerprint(for connection: Connection, password: String) async throws -> String {
         fingerprint
     }
 }

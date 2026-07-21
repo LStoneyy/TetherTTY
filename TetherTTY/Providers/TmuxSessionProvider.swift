@@ -34,3 +34,24 @@ struct SimulatedTmuxSessionProvider: TmuxSessionProvider {
         ]
     }
 }
+
+struct RealTmuxSessionProvider: TmuxSessionProvider {
+    let sshClient: SSHClient
+
+    init(sshClient: SSHClient = SwiftNIOSSHClient()) {
+        self.sshClient = sshClient
+    }
+
+    func fetchSessions(for request: TerminalConnectionRequest) async throws -> [TerminalSession] {
+        let output = try await sshClient.execute(
+            SSHShellRequest(
+                host: request.connection.host,
+                port: request.connection.port,
+                username: request.connection.username,
+                password: request.password
+            ),
+            command: "tmux list-sessions -F '#{session_name}\t#{session_windows}\t#{session_attached}\t#{session_created}'"
+        )
+        return TmuxSessionParser.parse(output)
+    }
+}

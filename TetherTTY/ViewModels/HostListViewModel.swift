@@ -58,14 +58,14 @@ final class HostListViewModel: ObservableObject {
         repository.hasPassword(for: connection.id)
     }
 
-    func terminalRequest(for connection: Connection) -> TerminalConnectionRequest? {
+    func terminalRequest(for connection: Connection) async -> TerminalConnectionRequest? {
         do {
             guard let password = try repository.password(for: connection.id), !password.isEmpty else {
                 errorMessage = SSHClientError.missingPassword.localizedDescription
                 return nil
             }
 
-            switch try hostKeyTrustEvaluator.evaluate(connection: connection, password: password) {
+            switch try await hostKeyTrustEvaluator.evaluate(connection: connection, password: password) {
             case .trusted:
                 errorMessage = nil
                 return TerminalConnectionRequest(connection: connection, password: password)

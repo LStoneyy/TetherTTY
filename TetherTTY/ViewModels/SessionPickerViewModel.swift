@@ -13,8 +13,8 @@ final class SessionPickerViewModel: ObservableObject {
 
     init(
         request: TerminalConnectionRequest,
-        tmuxProvider: TmuxSessionProvider = SimulatedTmuxSessionProvider(),
-        herdrProvider: HerdrSessionProvider = SimulatedHerdrSessionProvider()
+        tmuxProvider: TmuxSessionProvider = RealTmuxSessionProvider(),
+        herdrProvider: HerdrSessionProvider = RealHerdrSessionProvider()
     ) {
         self.request = request
         self.tmuxProvider = tmuxProvider

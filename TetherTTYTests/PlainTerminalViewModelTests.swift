@@ -154,10 +154,18 @@ struct StubSSHClient: SSHClient {
     func openShell(_ request: SSHShellRequest) async throws -> SSHSession {
         session
     }
+
+    func execute(_ request: SSHShellRequest, command: String) async throws -> String {
+        "stub output for: \(command)\n"
+    }
 }
 
 private struct FailingSSHClient: SSHClient {
     func openShell(_ request: SSHShellRequest) async throws -> SSHSession {
+        throw SSHClientError.connectionFailed("No route to host")
+    }
+
+    func execute(_ request: SSHShellRequest, command: String) async throws -> String {
         throw SSHClientError.connectionFailed("No route to host")
     }
 }
