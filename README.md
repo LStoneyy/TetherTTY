@@ -14,6 +14,10 @@ TetherTTY is meant for developers who already live in the terminal and want a cl
 * Minimal setup and no hosted backend
 * Open source, privacy-friendly, and free to use
 
+## Development status
+
+The current iPhone MVP is implemented as a native SwiftUI app with local host management, Face ID unlock, OpenSSH-style host-key trust, tmux and Herdr session discovery, a session picker, and a terminal with extra-key row. SSH connectivity, session discovery, and host-key fingerprint resolution use simulated development layers that will be replaced with a real SSH library before release. The architecture is designed for this substitution without affecting the UI or data layers.
+
 ## Non-goals
 
 TetherTTY is not trying to replace full-featured SSH clients, cloud IDEs, or remote desktop tools. It is intentionally small: a focused bridge from your phone to your running terminal.

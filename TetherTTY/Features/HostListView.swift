@@ -48,7 +48,6 @@ struct HostListView: View {
                         }
                     }
 
-                    StatePreviewStrip()
                 }
                 .padding(20)
                 .padding(.top, 8)
@@ -265,36 +264,6 @@ private struct StatusCard: View {
         }
         .padding(16)
         .background(AbyssCardBackground())
-    }
-}
-
-private struct StatePreviewStrip: View {
-    private let states: [(String, Color)] = [
-        ("Empty", AbyssalTheme.pacificCyan),
-        ("Ready", AbyssalTheme.mintLeaf),
-        ("Warning", AbyssalTheme.emberWarning),
-        ("Error", AbyssalTheme.bloodError)
-    ]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("State language")
-                .font(.system(.caption, design: .rounded, weight: .semibold))
-                .foregroundStyle(AbyssalTheme.bone.opacity(0.62))
-                .textCase(.uppercase)
-                .tracking(1.2)
-
-            HStack(spacing: 10) {
-                ForEach(states, id: \.0) { label, color in
-                    Text(label)
-                        .font(.system(.caption, design: .rounded, weight: .semibold))
-                        .foregroundStyle(color)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                        .background(Capsule().stroke(color.opacity(0.42), lineWidth: 1))
-                }
-            }
-        }
     }
 }
 

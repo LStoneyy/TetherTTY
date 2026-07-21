@@ -148,7 +148,7 @@ final class PlainTerminalViewModelTests: XCTestCase {
     }
 }
 
-private struct StubSSHClient: SSHClient {
+struct StubSSHClient: SSHClient {
     let session: SSHSession
 
     func openShell(_ request: SSHShellRequest) async throws -> SSHSession {
@@ -162,7 +162,7 @@ private struct FailingSSHClient: SSHClient {
     }
 }
 
-private final class StubSSHSession: SSHSession {
+final class StubSSHSession: SSHSession {
     let banner = "stub banner\n"
 
     func send(_ input: String) async throws -> String {

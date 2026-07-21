@@ -65,7 +65,7 @@ final class HostKeyTrustEvaluatorTests: XCTestCase {
     }
 }
 
-private struct FixedFingerprintResolver: HostKeyFingerprintResolver {
+struct FixedFingerprintResolver: HostKeyFingerprintResolver {
     let fingerprint: String
 
     func fingerprint(for connection: Connection) throws -> String {

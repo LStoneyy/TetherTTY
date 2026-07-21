@@ -14,6 +14,24 @@ struct PlainTerminalView: View {
         self.onReconnect = onReconnect
     }
 
+    private var transcriptText: String {
+        if !viewModel.transcript.isEmpty {
+            return viewModel.transcript
+        }
+        switch viewModel.state {
+        case .idle, .connecting:
+            return "Connecting..."
+        case .authenticating:
+            return "Authenticating..."
+        case .terminalOpen:
+            return "Terminal open."
+        case .disconnected:
+            return "Connection closed."
+        case .failed(let message):
+            return "Connection failed: \(message)"
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             TerminalStatusBar(state: viewModel.state) {
@@ -24,7 +42,7 @@ struct PlainTerminalView: View {
             }
 
             ScrollView {
-                Text(viewModel.transcript.isEmpty ? "Preparing terminal..." : viewModel.transcript)
+                Text(transcriptText)
                     .font(.system(size: 14, weight: .regular, design: .monospaced))
                     .foregroundStyle(AbyssalTheme.bone)
                     .frame(maxWidth: .infinity, alignment: .leading)

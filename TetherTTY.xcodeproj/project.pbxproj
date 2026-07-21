@@ -41,6 +41,7 @@
 		A20000000000000000000026 /* HerdrSessionParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000027 /* HerdrSessionParser.swift */; };
 		A20000000000000000000027 /* HerdrSessionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000028 /* HerdrSessionProvider.swift */; };
 		B20000000000000000000007 /* HerdrSessionParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000008 /* HerdrSessionParserTests.swift */; };
+		B20000000000000000000008 /* AppFlowIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000009 /* AppFlowIntegrationTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -90,6 +91,7 @@
 		A10000000000000000000027 /* HerdrSessionParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HerdrSessionParser.swift; sourceTree = "<group>"; };
 		A10000000000000000000028 /* HerdrSessionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HerdrSessionProvider.swift; sourceTree = "<group>"; };
 		B10000000000000000000008 /* HerdrSessionParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HerdrSessionParserTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000009 /* AppFlowIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFlowIntegrationTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -247,6 +249,7 @@
 				B10000000000000000000006 /* HostKeyTrustEvaluatorTests.swift */,
 				B10000000000000000000007 /* TmuxSessionParserTests.swift */,
 				B10000000000000000000008 /* HerdrSessionParserTests.swift */,
+				B10000000000000000000009 /* AppFlowIntegrationTests.swift */,
 			);
 			path = TetherTTYTests;
 			sourceTree = "<group>";
@@ -391,6 +394,7 @@
 				B20000000000000000000005 /* HostKeyTrustEvaluatorTests.swift in Sources */,
 				B20000000000000000000006 /* TmuxSessionParserTests.swift in Sources */,
 				B20000000000000000000007 /* HerdrSessionParserTests.swift in Sources */,
+				B20000000000000000000008 /* AppFlowIntegrationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
