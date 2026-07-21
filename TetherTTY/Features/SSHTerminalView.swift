@@ -4,7 +4,6 @@ import SwiftTerm
 final class SSHTerminalView: TerminalView, TerminalViewDelegate {
     var onSizeChanged: ((Int, Int) -> Void)?
     var onSend: (([UInt8]) -> Void)?
-    var ctrlMode = false
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -20,12 +19,6 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate {
     }
 
     func send(source: TerminalView, data: ArraySlice<UInt8>) {
-        if ctrlMode, let first = data.first {
-            ctrlMode = false
-            let controlByte = first & 0x1F
-            onSend?([controlByte])
-            return
-        }
         onSend?(Array(data))
     }
 

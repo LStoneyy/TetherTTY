@@ -80,28 +80,3 @@ final class PlainTerminalViewModel: ObservableObject {
     var connectionRequest: TerminalConnectionRequest { request }
 }
 
-enum TerminalSpecialKey: String, CaseIterable, Identifiable {
-    case esc = "Esc"
-    case ctrl = "Ctrl"
-    case tab = "Tab"
-    case up = "\u{2191}"
-    case down = "\u{2193}"
-    case pipe = "|"
-    case tilde = "~"
-    case slash = "/"
-
-    var id: String { rawValue }
-
-    var bytes: [UInt8] {
-        switch self {
-        case .esc: [0x1B]
-        case .ctrl: [] // modifier — handled by CtrlState in view
-        case .tab: [0x09]
-        case .up: [0x1B, 0x5B, 0x41]
-        case .down: [0x1B, 0x5B, 0x42]
-        case .pipe: [0x7C]
-        case .tilde: [0x7E]
-        case .slash: [0x2F]
-        }
-    }
-}

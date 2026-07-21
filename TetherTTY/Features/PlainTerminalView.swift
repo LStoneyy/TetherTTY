@@ -5,7 +5,6 @@ struct PlainTerminalView: View {
     @StateObject private var viewModel: PlainTerminalViewModel
 
     @State private var showKeyboard = false
-    @State private var ctrlActive = false
 
     let onReconnect: ((TerminalConnectionRequest) -> Void)?
     private let terminal = SSHTerminalView(frame: .zero)
@@ -32,23 +31,6 @@ struct PlainTerminalView: View {
 
             if viewModel.state == .disconnected {
                 disconnectedFooter
-            } else {
-                TerminalAccessoryBar(
-                    ctrlActive: $ctrlActive,
-                    onKey: { key in
-                        if ctrlActive {
-                            ctrlActive = false
-                            if let first = key.bytes.first {
-                                viewModel.sendBytes([first & 0x1F])
-                            }
-                        } else {
-                            viewModel.sendBytes(key.bytes)
-                        }
-                    },
-                    keyboardVisible: showKeyboard
-                ) {
-                    showKeyboard.toggle()
-                }
             }
         }
         .onAppear { wireTerminal() }
@@ -66,6 +48,12 @@ struct PlainTerminalView: View {
         }
         .task {
             await viewModel.connect()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            showKeyboard = false
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            showKeyboard = true
         }
     }
 
@@ -190,64 +178,3 @@ private struct TerminalStatusBar: View {
     }
 }
 
-private struct TerminalAccessoryBar: View {
-    @Binding var ctrlActive: Bool
-    let onKey: (TerminalSpecialKey) -> Void
-    let keyboardVisible: Bool
-    let toggleKeyboard: () -> Void
-
-    var body: some View {
-        HStack(spacing: 6) {
-            scrollableKeys
-            Spacer()
-            toggleButton
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
-        .background(AbyssalTheme.deepSpaceBlue)
-    }
-
-    private var scrollableKeys: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                Button {
-                    ctrlActive.toggle()
-                } label: {
-                    Text("Ctrl")
-                        .font(.system(.caption, design: .rounded, weight: .bold))
-                        .foregroundStyle(ctrlActive ? AbyssalTheme.mintLeaf : AbyssalTheme.pearlAqua)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule().stroke(
-                        ctrlActive ? AbyssalTheme.mintLeaf : AbyssalTheme.pacificCyan.opacity(0.42),
-                        lineWidth: 1
-                    )
-                )
-
-                ForEach(TerminalSpecialKey.allCases.filter { $0 != .ctrl }) { key in
-                    Button(key.rawValue) {
-                        onKey(key)
-                    }
-                    .font(.system(.caption, design: .rounded, weight: .bold))
-                    .foregroundStyle(AbyssalTheme.pearlAqua)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Capsule().stroke(AbyssalTheme.pacificCyan.opacity(0.42), lineWidth: 1))
-                }
-            }
-            .padding(.leading, 4)
-        }
-    }
-
-    private var toggleButton: some View {
-        Button(action: toggleKeyboard) {
-            Image(systemName: "keyboard")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(AbyssalTheme.pearlAqua)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-        }
-    }
-}
