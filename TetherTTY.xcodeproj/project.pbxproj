@@ -20,9 +20,14 @@
 		A20000000000000000000011 /* ConnectionEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000012 /* ConnectionEditorView.swift */; };
 		A20000000000000000000012 /* VaultUnlockClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000013 /* VaultUnlockClient.swift */; };
 		A20000000000000000000013 /* AppLockViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000014 /* AppLockViewModel.swift */; };
+		A20000000000000000000014 /* TerminalConnectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000015 /* TerminalConnectionState.swift */; };
+		A20000000000000000000015 /* SSHClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000016 /* SSHClient.swift */; };
+		A20000000000000000000016 /* PlainTerminalViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000017 /* PlainTerminalViewModel.swift */; };
+		A20000000000000000000017 /* PlainTerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000018 /* PlainTerminalView.swift */; };
 		B20000000000000000000001 /* AbyssalThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* AbyssalThemeTests.swift */; };
 		B20000000000000000000002 /* ConnectionRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* ConnectionRepositoryTests.swift */; };
 		B20000000000000000000003 /* AppLockViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* AppLockViewModelTests.swift */; };
+		B20000000000000000000004 /* PlainTerminalViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000005 /* PlainTerminalViewModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,10 +55,15 @@
 		A10000000000000000000012 /* ConnectionEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionEditorView.swift; sourceTree = "<group>"; };
 		A10000000000000000000013 /* VaultUnlockClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultUnlockClient.swift; sourceTree = "<group>"; };
 		A10000000000000000000014 /* AppLockViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockViewModel.swift; sourceTree = "<group>"; };
+		A10000000000000000000015 /* TerminalConnectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalConnectionState.swift; sourceTree = "<group>"; };
+		A10000000000000000000016 /* SSHClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHClient.swift; sourceTree = "<group>"; };
+		A10000000000000000000017 /* PlainTerminalViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlainTerminalViewModel.swift; sourceTree = "<group>"; };
+		A10000000000000000000018 /* PlainTerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlainTerminalView.swift; sourceTree = "<group>"; };
 		B10000000000000000000001 /* AbyssalThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbyssalThemeTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000002 /* TetherTTYTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TetherTTYTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B10000000000000000000003 /* ConnectionRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionRepositoryTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000004 /* AppLockViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockViewModelTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000005 /* PlainTerminalViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlainTerminalViewModelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -101,7 +111,9 @@
 				A10000000000000000000001 /* TetherTTYApp.swift */,
 				A30000000000000000000002 /* Models */,
 				A30000000000000000000007 /* Security */,
+				A30000000000000000000008 /* Networking */,
 				A30000000000000000000005 /* Persistence */,
+				A30000000000000000000009 /* Terminal */,
 				A30000000000000000000006 /* ViewModels */,
 				A30000000000000000000003 /* Theme */,
 				A30000000000000000000004 /* Features */,
@@ -115,6 +127,7 @@
 				A10000000000000000000002 /* AppLockState.swift */,
 				A10000000000000000000003 /* HostSummary.swift */,
 				A10000000000000000000008 /* Connection.swift */,
+				A10000000000000000000015 /* TerminalConnectionState.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -133,6 +146,7 @@
 			children = (
 				A10000000000000000000014 /* AppLockViewModel.swift */,
 				A10000000000000000000011 /* HostListViewModel.swift */,
+				A10000000000000000000017 /* PlainTerminalViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -143,6 +157,21 @@
 				A10000000000000000000013 /* VaultUnlockClient.swift */,
 			);
 			path = Security;
+			sourceTree = "<group>";
+		};
+		A30000000000000000000008 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000016 /* SSHClient.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		A30000000000000000000009 /* Terminal */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Terminal;
 			sourceTree = "<group>";
 		};
 		A30000000000000000000003 /* Theme */ = {
@@ -159,6 +188,7 @@
 				A10000000000000000000005 /* AppShellView.swift */,
 				A10000000000000000000006 /* HostListView.swift */,
 				A10000000000000000000012 /* ConnectionEditorView.swift */,
+				A10000000000000000000018 /* PlainTerminalView.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -169,6 +199,7 @@
 				B10000000000000000000001 /* AbyssalThemeTests.swift */,
 				B10000000000000000000003 /* ConnectionRepositoryTests.swift */,
 				B10000000000000000000004 /* AppLockViewModelTests.swift */,
+				B10000000000000000000005 /* PlainTerminalViewModelTests.swift */,
 			);
 			path = TetherTTYTests;
 			sourceTree = "<group>";
@@ -276,15 +307,19 @@
 				A20000000000000000000002 /* AppLockState.swift in Sources */,
 				A20000000000000000000003 /* HostSummary.swift in Sources */,
 				A20000000000000000000007 /* Connection.swift in Sources */,
+				A20000000000000000000014 /* TerminalConnectionState.swift in Sources */,
 				A20000000000000000000008 /* CredentialStore.swift in Sources */,
 				A20000000000000000000009 /* ConnectionRepository.swift in Sources */,
 				A20000000000000000000012 /* VaultUnlockClient.swift in Sources */,
+				A20000000000000000000015 /* SSHClient.swift in Sources */,
 				A20000000000000000000013 /* AppLockViewModel.swift in Sources */,
 				A20000000000000000000010 /* HostListViewModel.swift in Sources */,
+				A20000000000000000000016 /* PlainTerminalViewModel.swift in Sources */,
 				A20000000000000000000004 /* AbyssalTheme.swift in Sources */,
 				A20000000000000000000005 /* AppShellView.swift in Sources */,
 				A20000000000000000000006 /* HostListView.swift in Sources */,
 				A20000000000000000000011 /* ConnectionEditorView.swift in Sources */,
+				A20000000000000000000017 /* PlainTerminalView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -295,6 +330,7 @@
 				B20000000000000000000001 /* AbyssalThemeTests.swift in Sources */,
 				B20000000000000000000002 /* ConnectionRepositoryTests.swift in Sources */,
 				B20000000000000000000003 /* AppLockViewModelTests.swift in Sources */,
+				B20000000000000000000004 /* PlainTerminalViewModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

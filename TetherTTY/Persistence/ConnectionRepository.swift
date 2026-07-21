@@ -5,6 +5,7 @@ protocol ConnectionRepository {
     func saveConnection(_ connection: Connection, password: String?) throws
     func deleteConnection(id: UUID) throws
     func toggleFavorite(id: UUID) throws
+    func password(for connectionID: UUID) throws -> String?
     func hasPassword(for connectionID: UUID) -> Bool
 }
 
@@ -76,6 +77,10 @@ final class LocalConnectionRepository: ConnectionRepository {
 
     func hasPassword(for connectionID: UUID) -> Bool {
         credentialStore.hasPassword(for: connectionID)
+    }
+
+    func password(for connectionID: UUID) throws -> String? {
+        try credentialStore.password(for: connectionID)
     }
 
     private func persist(_ connections: [Connection]) throws {

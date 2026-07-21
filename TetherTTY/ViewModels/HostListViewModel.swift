@@ -51,6 +51,21 @@ final class HostListViewModel: ObservableObject {
     func hasPassword(for connection: Connection) -> Bool {
         repository.hasPassword(for: connection.id)
     }
+
+    func terminalRequest(for connection: Connection) -> TerminalConnectionRequest? {
+        do {
+            guard let password = try repository.password(for: connection.id), !password.isEmpty else {
+                errorMessage = SSHClientError.missingPassword.localizedDescription
+                return nil
+            }
+
+            errorMessage = nil
+            return TerminalConnectionRequest(connection: connection, password: password)
+        } catch {
+            errorMessage = "Could not unlock this tether's password."
+            return nil
+        }
+    }
 }
 
 struct ConnectionDraft: Equatable {

@@ -3,6 +3,7 @@ import Security
 
 protocol CredentialStore {
     func savePassword(_ password: String, for connectionID: UUID) throws
+    func password(for connectionID: UUID) throws -> String?
     func hasPassword(for connectionID: UUID) -> Bool
     func deletePassword(for connectionID: UUID) throws
 }
@@ -43,6 +44,23 @@ final class KeychainCredentialStore: CredentialStore {
         return status == errSecSuccess
     }
 
+    func password(for connectionID: UUID) throws -> String? {
+        var query = baseQuery(for: connectionID)
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+
+        var item: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &item)
+
+        guard status != errSecItemNotFound else { return nil }
+        guard status == errSecSuccess else {
+            throw CredentialStoreError.unhandledStatus(status)
+        }
+
+        guard let data = item as? Data else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
     func deletePassword(for connectionID: UUID) throws {
         let status = SecItemDelete(baseQuery(for: connectionID) as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
@@ -68,6 +86,10 @@ final class InMemoryCredentialStore: CredentialStore {
 
     func hasPassword(for connectionID: UUID) -> Bool {
         passwords[connectionID] != nil
+    }
+
+    func password(for connectionID: UUID) throws -> String? {
+        passwords[connectionID]
     }
 
     func deletePassword(for connectionID: UUID) throws {

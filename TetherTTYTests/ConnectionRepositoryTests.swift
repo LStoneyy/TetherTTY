@@ -36,6 +36,7 @@ final class ConnectionRepositoryTests: XCTestCase {
         XCTAssertEqual(loaded.first?.alias, "Laptop")
         XCTAssertEqual(loaded.first?.displayAddress, "lukas@192.0.2.42:22")
         XCTAssertTrue(repository.hasPassword(for: connection.id))
+        XCTAssertEqual(try repository.password(for: connection.id), "correct horse battery staple")
         XCTAssertFalse(storedConnectionPayload().contains("correct horse battery staple"))
     }
 

@@ -3,6 +3,7 @@ import SwiftUI
 struct HostListView: View {
     @StateObject private var viewModel = HostListViewModel()
     @State private var editorDraft: ConnectionDraft?
+    @State private var terminalRequest: TerminalConnectionRequest?
 
     var body: some View {
         NavigationStack {
@@ -23,6 +24,9 @@ struct HostListView: View {
                             HostCard(
                                 connection: connection,
                                 hasPassword: viewModel.hasPassword(for: connection),
+                                connect: {
+                                    terminalRequest = viewModel.terminalRequest(for: connection)
+                                },
                                 edit: { editorDraft = ConnectionDraft(connection: connection) },
                                 toggleFavorite: { viewModel.toggleFavorite(connection) },
                                 delete: { viewModel.delete(connection) }
@@ -54,6 +58,9 @@ struct HostListView: View {
                 ConnectionEditorView(initialDraft: draft) { savedDraft in
                     viewModel.save(savedDraft)
                 }
+            }
+            .fullScreenCover(item: $terminalRequest) { request in
+                PlainTerminalView(request: request)
             }
         }
     }
@@ -116,6 +123,7 @@ private struct EmptyHostListView: View {
 private struct HostCard: View {
     let connection: Connection
     let hasPassword: Bool
+    let connect: () -> Void
     let edit: () -> Void
     let toggleFavorite: () -> Void
     let delete: () -> Void
@@ -161,6 +169,15 @@ private struct HostCard: View {
             }
 
             HStack(spacing: 8) {
+                Button(action: connect) {
+                    Label("Connect", systemImage: "terminal")
+                        .font(.system(.caption, design: .rounded, weight: .semibold))
+                        .foregroundStyle(AbyssalTheme.abyss)
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 7)
+                        .background(Capsule().fill(AbyssalTheme.mintLeaf))
+                }
+
                 if connection.isFavorite {
                     Badge(label: "Favorite", systemImage: "star.fill", tint: AbyssalTheme.mintLeaf)
                 }
