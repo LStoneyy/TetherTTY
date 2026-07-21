@@ -4,11 +4,17 @@ import Foundation
 final class HostListViewModel: ObservableObject {
     @Published private(set) var connections: [Connection] = []
     @Published var errorMessage: String?
+    @Published var hostKeyChallenge: HostKeyChallenge?
 
     private let repository: ConnectionRepository
+    private let hostKeyTrustEvaluator: HostKeyTrustEvaluator
 
-    init(repository: ConnectionRepository = LocalConnectionRepository()) {
+    init(
+        repository: ConnectionRepository = LocalConnectionRepository(),
+        hostKeyTrustEvaluator: HostKeyTrustEvaluator = HostKeyTrustEvaluator()
+    ) {
         self.repository = repository
+        self.hostKeyTrustEvaluator = hostKeyTrustEvaluator
         reload()
     }
 
@@ -59,12 +65,37 @@ final class HostListViewModel: ObservableObject {
                 return nil
             }
 
-            errorMessage = nil
-            return TerminalConnectionRequest(connection: connection, password: password)
+            switch try hostKeyTrustEvaluator.evaluate(connection: connection, password: password) {
+            case .trusted:
+                errorMessage = nil
+                return TerminalConnectionRequest(connection: connection, password: password)
+            case .unknown(let challenge):
+                hostKeyChallenge = challenge
+                errorMessage = nil
+                return nil
+            case .changed(let expected, let actual):
+                errorMessage = "Host key changed. Expected \(expected), got \(actual). Connection blocked."
+                return nil
+            }
         } catch {
-            errorMessage = "Could not unlock this tether's password."
+            errorMessage = "Could not verify this tether's host key."
             return nil
         }
+    }
+
+    func trustHostKey(_ challenge: HostKeyChallenge) -> TerminalConnectionRequest? {
+        do {
+            hostKeyChallenge = nil
+            errorMessage = nil
+            return try hostKeyTrustEvaluator.trust(challenge)
+        } catch {
+            errorMessage = "Could not save this host key."
+            return nil
+        }
+    }
+
+    func cancelHostKeyTrust() {
+        hostKeyChallenge = nil
     }
 }
 

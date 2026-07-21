@@ -62,6 +62,18 @@ struct HostListView: View {
             .fullScreenCover(item: $terminalRequest) { request in
                 PlainTerminalView(request: request)
             }
+            .alert(item: $viewModel.hostKeyChallenge) { challenge in
+                Alert(
+                    title: Text("Trust New Host?"),
+                    message: Text("\(challenge.connection.displayAddress) presented fingerprint:\n\n\(challenge.fingerprint)"),
+                    primaryButton: .default(Text("Trust")) {
+                        terminalRequest = viewModel.trustHostKey(challenge)
+                    },
+                    secondaryButton: .cancel {
+                        viewModel.cancelHostKeyTrust()
+                    }
+                )
+            }
         }
     }
 }

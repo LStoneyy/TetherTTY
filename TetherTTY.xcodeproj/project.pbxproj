@@ -24,10 +24,14 @@
 		A20000000000000000000015 /* SSHClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000016 /* SSHClient.swift */; };
 		A20000000000000000000016 /* PlainTerminalViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000017 /* PlainTerminalViewModel.swift */; };
 		A20000000000000000000017 /* PlainTerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000018 /* PlainTerminalView.swift */; };
+		A20000000000000000000018 /* KnownHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000019 /* KnownHost.swift */; };
+		A20000000000000000000019 /* KnownHostStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000020 /* KnownHostStore.swift */; };
+		A20000000000000000000020 /* HostKeyTrustEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000021 /* HostKeyTrustEvaluator.swift */; };
 		B20000000000000000000001 /* AbyssalThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* AbyssalThemeTests.swift */; };
 		B20000000000000000000002 /* ConnectionRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* ConnectionRepositoryTests.swift */; };
 		B20000000000000000000003 /* AppLockViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* AppLockViewModelTests.swift */; };
 		B20000000000000000000004 /* PlainTerminalViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000005 /* PlainTerminalViewModelTests.swift */; };
+		B20000000000000000000005 /* HostKeyTrustEvaluatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* HostKeyTrustEvaluatorTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,11 +63,15 @@
 		A10000000000000000000016 /* SSHClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHClient.swift; sourceTree = "<group>"; };
 		A10000000000000000000017 /* PlainTerminalViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlainTerminalViewModel.swift; sourceTree = "<group>"; };
 		A10000000000000000000018 /* PlainTerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlainTerminalView.swift; sourceTree = "<group>"; };
+		A10000000000000000000019 /* KnownHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnownHost.swift; sourceTree = "<group>"; };
+		A10000000000000000000020 /* KnownHostStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnownHostStore.swift; sourceTree = "<group>"; };
+		A10000000000000000000021 /* HostKeyTrustEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostKeyTrustEvaluator.swift; sourceTree = "<group>"; };
 		B10000000000000000000001 /* AbyssalThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbyssalThemeTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000002 /* TetherTTYTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TetherTTYTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B10000000000000000000003 /* ConnectionRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionRepositoryTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000004 /* AppLockViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockViewModelTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000005 /* PlainTerminalViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlainTerminalViewModelTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000006 /* HostKeyTrustEvaluatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostKeyTrustEvaluatorTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -128,6 +136,7 @@
 				A10000000000000000000003 /* HostSummary.swift */,
 				A10000000000000000000008 /* Connection.swift */,
 				A10000000000000000000015 /* TerminalConnectionState.swift */,
+				A10000000000000000000019 /* KnownHost.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -155,6 +164,8 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000013 /* VaultUnlockClient.swift */,
+				A10000000000000000000020 /* KnownHostStore.swift */,
+				A10000000000000000000021 /* HostKeyTrustEvaluator.swift */,
 			);
 			path = Security;
 			sourceTree = "<group>";
@@ -200,6 +211,7 @@
 				B10000000000000000000003 /* ConnectionRepositoryTests.swift */,
 				B10000000000000000000004 /* AppLockViewModelTests.swift */,
 				B10000000000000000000005 /* PlainTerminalViewModelTests.swift */,
+				B10000000000000000000006 /* HostKeyTrustEvaluatorTests.swift */,
 			);
 			path = TetherTTYTests;
 			sourceTree = "<group>";
@@ -308,9 +320,12 @@
 				A20000000000000000000003 /* HostSummary.swift in Sources */,
 				A20000000000000000000007 /* Connection.swift in Sources */,
 				A20000000000000000000014 /* TerminalConnectionState.swift in Sources */,
+				A20000000000000000000018 /* KnownHost.swift in Sources */,
 				A20000000000000000000008 /* CredentialStore.swift in Sources */,
 				A20000000000000000000009 /* ConnectionRepository.swift in Sources */,
 				A20000000000000000000012 /* VaultUnlockClient.swift in Sources */,
+				A20000000000000000000019 /* KnownHostStore.swift in Sources */,
+				A20000000000000000000020 /* HostKeyTrustEvaluator.swift in Sources */,
 				A20000000000000000000015 /* SSHClient.swift in Sources */,
 				A20000000000000000000013 /* AppLockViewModel.swift in Sources */,
 				A20000000000000000000010 /* HostListViewModel.swift in Sources */,
@@ -331,6 +346,7 @@
 				B20000000000000000000002 /* ConnectionRepositoryTests.swift in Sources */,
 				B20000000000000000000003 /* AppLockViewModelTests.swift in Sources */,
 				B20000000000000000000004 /* PlainTerminalViewModelTests.swift in Sources */,
+				B20000000000000000000005 /* HostKeyTrustEvaluatorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
