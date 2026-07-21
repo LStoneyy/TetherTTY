@@ -1,8 +1,8 @@
 import CryptoKit
 import Foundation
-import NIOCore
-import NIOPosix
-import NIOSSH
+@preconcurrency import NIOCore
+@preconcurrency import NIOPosix
+@preconcurrency import NIOSSH
 
 protocol HostKeyFingerprintResolver {
     func fingerprint(for connection: Connection, password: String) async throws -> String

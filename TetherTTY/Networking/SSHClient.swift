@@ -1,7 +1,7 @@
 import Foundation
-import NIOCore
-import NIOPosix
-import NIOSSH
+@preconcurrency import NIOCore
+@preconcurrency import NIOPosix
+@preconcurrency import NIOSSH
 
 struct SSHShellRequest: Equatable {
     let host: String
@@ -129,7 +129,7 @@ final class SwiftNIOSSHClient: SSHClient {
                             )
                         }
                         return childChannel.eventLoop.makeCompletedFuture {
-                            try childChannel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
+                            _ = childChannel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
                             let shell = InteractiveShellHandler(
                                 continuation: cont,
                                 allocator: childChannel.allocator
@@ -172,23 +172,28 @@ final class SwiftNIOSSHClient: SSHClient {
         let channel = try await bootstrap.connect(host: request.host, port: request.port).get()
 
         return try await withCheckedThrowingContinuation { cont in
+            let timeout = channel.eventLoop.scheduleTask(in: .seconds(10)) {
+                cont.resume(throwing: SSHClientError.connectionFailed("Command timed out"))
+            }
             channel.pipeline.handler(type: NIOSSHHandler.self).whenComplete { result in
                 switch result {
                 case .success(let sshHandler):
                     sshHandler.createChannel { childChannel, channelType in
+                        timeout.cancel()
                         guard channelType == .session else {
                             return childChannel.eventLoop.makeFailedFuture(
                                 SSHClientError.connectionFailed("Unexpected channel type")
                             )
                         }
                         return childChannel.eventLoop.makeCompletedFuture {
-                            try childChannel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
+                            _ = childChannel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
                             try childChannel.pipeline.syncOperations.addHandler(
                                 ExecCommandHandler(command: command, continuation: cont, allocator: childChannel.allocator)
                             )
                         }
                     }
                 case .failure(let error):
+                    timeout.cancel()
                     cont.resume(throwing: error)
                 }
             }
@@ -308,7 +313,7 @@ final class InteractiveShellHandler: ChannelDuplexHandler {
 
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let channelData = unwrapInboundIn(data)
-        guard case .byteBuffer(var bytes) = channelData.data else { return }
+        guard case .byteBuffer(let bytes) = channelData.data else { return }
         Task { await outputActor.append(String(buffer: bytes)) }
     }
 

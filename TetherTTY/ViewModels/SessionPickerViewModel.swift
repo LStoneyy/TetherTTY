@@ -26,18 +26,23 @@ final class SessionPickerViewModel: ObservableObject {
         errorMessage = nil
         herdrErrorMessage = nil
 
+        let tmuxTask = Task { try await tmuxProvider.fetchSessions(for: request) }
+        let herdrTask = Task { try await herdrProvider.fetchSessions(for: request) }
+
         var tmuxSessions: [TerminalSession] = []
         var herdrSessions: [TerminalSession] = []
 
-        do {
-            tmuxSessions = try await tmuxProvider.fetchSessions(for: request)
-        } catch {
+        switch await tmuxTask.result {
+        case .success(let sessions):
+            tmuxSessions = sessions
+        case .failure(let error):
             errorMessage = error.localizedDescription
         }
 
-        do {
-            herdrSessions = try await herdrProvider.fetchSessions(for: request)
-        } catch {
+        switch await herdrTask.result {
+        case .success(let sessions):
+            herdrSessions = sessions
+        case .failure(let error):
             herdrErrorMessage = error.localizedDescription
         }
 
