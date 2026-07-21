@@ -93,7 +93,10 @@ final class SwiftNIOSSHClient: SSHClient {
             throw SSHClientError.missingPassword
         }
 
+        print("[SSH] openShell connecting to \(request.host):\(request.port) as \(request.username)...")
+
         let bootstrap = ClientBootstrap(group: group)
+            .connectTimeout(.seconds(10))
             .channelInitializer { channel in
                 channel.pipeline.addHandlers(
                     NIOSSHHandler(
@@ -113,6 +116,8 @@ final class SwiftNIOSSHClient: SSHClient {
             }
 
         let channel = try await bootstrap.connect(host: request.host, port: request.port).get()
+
+        print("[SSH] openShell: TCP+SSH handshake OK, creating shell channel...")
 
         return try await withCheckedThrowingContinuation { cont in
             let timeout = channel.eventLoop.scheduleTask(in: .seconds(15)) {
@@ -150,7 +155,10 @@ final class SwiftNIOSSHClient: SSHClient {
             throw SSHClientError.missingPassword
         }
 
+        print("[SSH] execute '\(command)' on \(request.host):\(request.port) as \(request.username)...")
+
         let bootstrap = ClientBootstrap(group: group)
+            .connectTimeout(.seconds(10))
             .channelInitializer { channel in
                 channel.pipeline.addHandlers(
                     NIOSSHHandler(
