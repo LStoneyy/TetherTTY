@@ -95,56 +95,57 @@ final class SwiftNIOSSHClient: SSHClient {
 
         print("[SSH] openShell connecting to \(request.host):\(request.port) as \(request.username)...")
 
+        let handlerPromise = group.next().makePromise(of: NIOSSHHandler.self)
+
         let bootstrap = ClientBootstrap(group: group)
-            .connectTimeout(.seconds(10))
+            .connectTimeout(.seconds(8))
             .channelInitializer { channel in
-                channel.pipeline.addHandlers(
-                    NIOSSHHandler(
-                        role: .client(.init(
-                            userAuthDelegate: SimplePasswordDelegate(username: request.username, password: request.password),
-                            serverAuthDelegate: VerifyingHostKeyDelegate(
-                                knownHostStore: self.knownHostStore,
-                                host: request.host,
-                                port: request.port
-                            )
-                        )),
-                        allocator: channel.allocator,
-                        inboundChildChannelInitializer: nil
-                    ),
-                    NIOCloseOnErrorHandler()
+                let sshHandler = NIOSSHHandler(
+                    role: .client(.init(
+                        userAuthDelegate: SimplePasswordDelegate(username: request.username, password: request.password),
+                        serverAuthDelegate: VerifyingHostKeyDelegate(
+                            knownHostStore: self.knownHostStore,
+                            host: request.host,
+                            port: request.port
+                        )
+                    )),
+                    allocator: channel.allocator,
+                    inboundChildChannelInitializer: nil
                 )
+                handlerPromise.succeed(sshHandler)
+                return channel.pipeline.addHandlers(sshHandler, NIOCloseOnErrorHandler())
             }
 
         let channel = try await bootstrap.connect(host: request.host, port: request.port).get()
+        let sshHandler = try await handlerPromise.futureResult.get()
 
-        print("[SSH] openShell: TCP+SSH handshake OK, creating shell channel...")
+        print("[SSH] openShell: connected, creating shell channel...")
 
         return try await withCheckedThrowingContinuation { cont in
-            let timeout = channel.eventLoop.scheduleTask(in: .seconds(15)) {
-                cont.resume(throwing: SSHClientError.connectionFailed("SSH handshake timed out"))
+            var didResume = false
+            let timeout = channel.eventLoop.scheduleTask(in: .seconds(8)) {
+                guard !didResume else { return }
+                didResume = true
+                print("[SSH] openShell: timed out waiting for channel")
+                cont.resume(throwing: SSHClientError.connectionFailed("Shell channel setup timed out"))
             }
-            channel.pipeline.handler(type: NIOSSHHandler.self).whenComplete { result in
-                switch result {
-                case .success(let sshHandler):
-                    sshHandler.createChannel { childChannel, channelType in
-                        timeout.cancel()
-                        guard channelType == .session else {
-                            return childChannel.eventLoop.makeFailedFuture(
-                                SSHClientError.connectionFailed("Unexpected channel type")
-                            )
-                        }
-                        return childChannel.eventLoop.makeCompletedFuture {
-                            _ = childChannel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
-                            let shell = InteractiveShellHandler(
-                                continuation: cont,
-                                allocator: childChannel.allocator
-                            )
-                            try childChannel.pipeline.syncOperations.addHandler(shell)
-                        }
-                    }
-                case .failure(let error):
-                    timeout.cancel()
-                    cont.resume(throwing: error)
+            sshHandler.createChannel { childChannel, channelType in
+                timeout.cancel()
+                guard !didResume else { return childChannel.close().map { _ in () } }
+                print("[SSH] openShell: channel type=\(channelType)")
+                guard channelType == .session else {
+                    return childChannel.eventLoop.makeFailedFuture(
+                        SSHClientError.connectionFailed("Unexpected channel type")
+                    )
+                }
+                return childChannel.eventLoop.makeCompletedFuture {
+                    _ = childChannel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
+                    let shell = InteractiveShellHandler(
+                        continuation: cont,
+                        allocator: childChannel.allocator
+                    )
+                    try childChannel.pipeline.syncOperations.addHandler(shell)
+                    print("[SSH] openShell: shell handler added")
                 }
             }
         }
@@ -157,52 +158,55 @@ final class SwiftNIOSSHClient: SSHClient {
 
         print("[SSH] execute '\(command)' on \(request.host):\(request.port) as \(request.username)...")
 
+        let handlerPromise = group.next().makePromise(of: NIOSSHHandler.self)
+
         let bootstrap = ClientBootstrap(group: group)
-            .connectTimeout(.seconds(10))
+            .connectTimeout(.seconds(8))
             .channelInitializer { channel in
-                channel.pipeline.addHandlers(
-                    NIOSSHHandler(
-                        role: .client(.init(
-                            userAuthDelegate: SimplePasswordDelegate(username: request.username, password: request.password),
-                            serverAuthDelegate: VerifyingHostKeyDelegate(
-                                knownHostStore: self.knownHostStore,
-                                host: request.host,
-                                port: request.port
-                            )
-                        )),
-                        allocator: channel.allocator,
-                        inboundChildChannelInitializer: nil
-                    ),
-                    NIOCloseOnErrorHandler()
+                let sshHandler = NIOSSHHandler(
+                    role: .client(.init(
+                        userAuthDelegate: SimplePasswordDelegate(username: request.username, password: request.password),
+                        serverAuthDelegate: VerifyingHostKeyDelegate(
+                            knownHostStore: self.knownHostStore,
+                            host: request.host,
+                            port: request.port
+                        )
+                    )),
+                    allocator: channel.allocator,
+                    inboundChildChannelInitializer: nil
                 )
+                handlerPromise.succeed(sshHandler)
+                return channel.pipeline.addHandlers(sshHandler, NIOCloseOnErrorHandler())
             }
 
         let channel = try await bootstrap.connect(host: request.host, port: request.port).get()
+        let sshHandler = try await handlerPromise.futureResult.get()
+
+        print("[SSH] execute: connected, creating exec channel...")
 
         return try await withCheckedThrowingContinuation { cont in
-            let timeout = channel.eventLoop.scheduleTask(in: .seconds(10)) {
+            var didResume = false
+            let timeout = channel.eventLoop.scheduleTask(in: .seconds(8)) {
+                guard !didResume else { return }
+                didResume = true
+                print("[SSH] execute: timed out waiting for channel")
                 cont.resume(throwing: SSHClientError.connectionFailed("Command timed out"))
             }
-            channel.pipeline.handler(type: NIOSSHHandler.self).whenComplete { result in
-                switch result {
-                case .success(let sshHandler):
-                    sshHandler.createChannel { childChannel, channelType in
-                        timeout.cancel()
-                        guard channelType == .session else {
-                            return childChannel.eventLoop.makeFailedFuture(
-                                SSHClientError.connectionFailed("Unexpected channel type")
-                            )
-                        }
-                        return childChannel.eventLoop.makeCompletedFuture {
-                            _ = childChannel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
-                            try childChannel.pipeline.syncOperations.addHandler(
-                                ExecCommandHandler(command: command, continuation: cont, allocator: childChannel.allocator)
-                            )
-                        }
-                    }
-                case .failure(let error):
-                    timeout.cancel()
-                    cont.resume(throwing: error)
+            sshHandler.createChannel { childChannel, channelType in
+                timeout.cancel()
+                guard !didResume else { return childChannel.close().map { _ in () } }
+                print("[SSH] execute: channel type=\(channelType)")
+                guard channelType == .session else {
+                    return childChannel.eventLoop.makeFailedFuture(
+                        SSHClientError.connectionFailed("Unexpected channel type")
+                    )
+                }
+                return childChannel.eventLoop.makeCompletedFuture {
+                    _ = childChannel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
+                    try childChannel.pipeline.syncOperations.addHandler(
+                        ExecCommandHandler(command: command, continuation: cont, allocator: childChannel.allocator)
+                    )
+                    print("[SSH] execute: exec handler added")
                 }
             }
         }
@@ -378,10 +382,13 @@ final class SimplePasswordDelegate: NIOSSHClientUserAuthenticationDelegate {
     }
 
     func nextAuthenticationType(availableMethods: NIOSSHAvailableUserAuthenticationMethods, nextChallengePromise: EventLoopPromise<NIOSSHUserAuthenticationOffer?>) {
+        print("[SSH] auth: server offers methods \(availableMethods)")
         guard availableMethods.contains(.password) else {
+            print("[SSH] auth: password not available")
             nextChallengePromise.fail(SSHClientError.connectionFailed("Password authentication not available"))
             return
         }
+        print("[SSH] auth: sending password for \(username)")
         nextChallengePromise.succeed(NIOSSHUserAuthenticationOffer(
             username: username,
             serviceName: "ssh-connection",
@@ -409,11 +416,14 @@ final class VerifyingHostKeyDelegate: NIOSSHClientServerAuthenticationDelegate {
 
     func validateHostKey(hostKey: NIOSSHPublicKey, validationCompletePromise: EventLoopPromise<Void>) {
         let fingerprint = SHA256HostKeyFingerprintFormatter.format(hostKey)
+        print("[SSH] hostkey: fingerprint=\(fingerprint)")
         do {
             if let knownHost = try knownHostStore.knownHost(host: host, port: port) {
                 if knownHost.fingerprint == fingerprint {
+                    print("[SSH] hostkey: known and matches")
                     validationCompletePromise.succeed(())
                 } else {
+                    print("[SSH] hostkey: MISMATCH expected=\(knownHost.fingerprint) actual=\(fingerprint)")
                     validationCompletePromise.fail(SSHClientError.hostKeyChanged(expected: knownHost.fingerprint, actual: fingerprint))
                 }
             } else {
@@ -428,6 +438,7 @@ final class VerifyingHostKeyDelegate: NIOSSHClientServerAuthenticationDelegate {
 final class NIOCloseOnErrorHandler: ChannelInboundHandler {
     typealias InboundIn = Any
     func errorCaught(context: ChannelHandlerContext, error: Error) {
+        print("[SSH] channel error: \(error)")
         context.close(promise: nil)
     }
 }
