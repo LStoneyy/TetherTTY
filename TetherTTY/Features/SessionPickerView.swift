@@ -52,6 +52,14 @@ struct SessionPickerView: View {
                 .padding(.top, 8)
             }
             .background(AbyssBackground())
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
+                        dismiss()
+                    }
+                    .foregroundStyle(AbyssalTheme.pearlAqua)
+                }
+            }
         }
         .task {
             await viewModel.fetchSessions()
