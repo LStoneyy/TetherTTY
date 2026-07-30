@@ -66,7 +66,7 @@ final class PlainTerminalViewModel: ObservableObject {
     private func wireSessionOutput(_ session: SSHSession) {
         var session = session
         session.onOutput = { [weak terminal] bytes in
-            terminal?.feed(byteArray: ArraySlice(bytes))
+            terminal?.feedOutput(bytes)
         }
         terminal.onSizeChanged = { [weak self] cols, rows in
             Task { @MainActor in

@@ -5,6 +5,8 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate {
     var onSizeChanged: ((Int, Int) -> Void)?
     var onSend: (([UInt8]) -> Void)?
 
+    private var scrollReconcilePending = false
+
     private static let terminalBg = UIColor(red: 0.04, green: 0.04, blue: 0.08, alpha: 1.0)
     private static let terminalFg = UIColor(red: 0.95, green: 0.95, blue: 0.90, alpha: 1.0)
 
@@ -28,6 +30,28 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate {
 
     func send(source: TerminalView, data: ArraySlice<UInt8>) {
         onSend?(Array(data))
+    }
+
+    func feedOutput(_ bytes: [UInt8]) {
+        feed(byteArray: ArraySlice(bytes))
+        scheduleScrollReconcile()
+    }
+
+    private func scheduleScrollReconcile() {
+        guard !scrollReconcilePending else { return }
+        scrollReconcilePending = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.scrollReconcilePending = false
+            self.reconcileScroll()
+        }
+    }
+
+    private func reconcileScroll() {
+        guard !isTracking, !isDragging, !isDecelerating else { return }
+        let yDisp = getTerminal().buffer.yDisp
+        scrollTo(row: yDisp, notifyAccessibility: false)
+        setNeedsDisplay(bounds)
     }
 
     func sizeChanged(source: TerminalView, newCols: Int, newRows: Int) {
