@@ -7,7 +7,6 @@ struct PlainTerminalView: View {
     @State private var showKeyboard = false
 
     let onReconnect: ((TerminalConnectionRequest) -> Void)?
-    private let terminal = SSHTerminalView(frame: .zero)
 
     init(
         request: TerminalConnectionRequest,
@@ -26,7 +25,7 @@ struct PlainTerminalView: View {
                 }
             }
 
-            TerminalViewRepresentable(terminal: terminal)
+            TerminalViewRepresentable(terminal: viewModel.terminal)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(red: 0.04, green: 0.04, blue: 0.08))
 
@@ -34,17 +33,11 @@ struct PlainTerminalView: View {
                 disconnectedFooter
             }
         }
-        .onAppear { wireTerminal() }
-        .onChange(of: viewModel.state) { _, newState in
-            if newState == .terminalOpen, let session = viewModel.session {
-                wireSessionOutput(session)
-            }
-        }
         .onChange(of: showKeyboard) { _, visible in
             if visible {
-                terminal.becomeFirstResponder()
+                viewModel.terminal.becomeFirstResponder()
             } else {
-                terminal.resignFirstResponder()
+                viewModel.terminal.resignFirstResponder()
             }
         }
         .task {
@@ -55,33 +48,6 @@ struct PlainTerminalView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
             showKeyboard = true
-        }
-    }
-
-    private func wireTerminal() {
-        terminal.onSend = { [weak viewModel] bytes in
-            viewModel?.sendBytes(bytes)
-        }
-    }
-
-    private func wireSessionOutput(_ session: SSHSession?) {
-        guard var session else { return }
-        var feedCount = 0
-        session.onOutput = { [weak terminal] bytes in
-            feedCount += 1
-            if feedCount <= 5 { print("[Terminal] feed #\(feedCount): \(bytes.count) bytes") }
-            terminal?.feed(byteArray: ArraySlice(bytes))
-        }
-        terminal.onSizeChanged = { cols, rows in
-            Task { @MainActor in
-                await session.resize(cols: cols, rows: rows)
-            }
-        }
-        let current = terminal.getTerminal()
-        if current.cols > 0, current.rows > 0 {
-            Task { @MainActor in
-                await session.resize(cols: current.cols, rows: current.rows)
-            }
         }
     }
 

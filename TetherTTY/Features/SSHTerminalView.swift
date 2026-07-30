@@ -19,7 +19,6 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        nativeBackgroundColor = Self.terminalBg
         layer.backgroundColor = Self.terminalBg.cgColor
     }
 

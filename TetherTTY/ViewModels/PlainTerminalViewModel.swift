@@ -1,4 +1,5 @@
 import Foundation
+import SwiftTerm
 
 @MainActor
 final class PlainTerminalViewModel: ObservableObject {
@@ -9,9 +10,15 @@ final class PlainTerminalViewModel: ObservableObject {
     private let sshClient: SSHClient
     private var connectedSession: SSHSession?
 
+    let terminal = SSHTerminalView(frame: .zero)
+
     init(request: TerminalConnectionRequest, sshClient: SSHClient = SwiftNIOSSHClient()) {
         self.request = request
         self.sshClient = sshClient
+
+        terminal.onSend = { [weak self] bytes in
+            self?.sendBytes(bytes)
+        }
     }
 
     func connect() async {
@@ -45,6 +52,7 @@ final class PlainTerminalViewModel: ObservableObject {
 
             connectedSession = shell
             session = shell
+            wireSessionOutput(shell)
             state = .terminalOpen
 
             if let startupCommand = request.startupCommand {
@@ -52,6 +60,24 @@ final class PlainTerminalViewModel: ObservableObject {
             }
         } catch {
             state = .failed(error.localizedDescription)
+        }
+    }
+
+    private func wireSessionOutput(_ session: SSHSession) {
+        var session = session
+        session.onOutput = { [weak terminal] bytes in
+            terminal?.feed(byteArray: ArraySlice(bytes))
+        }
+        terminal.onSizeChanged = { [weak self] cols, rows in
+            Task { @MainActor in
+                await self?.connectedSession?.resize(cols: cols, rows: rows)
+            }
+        }
+        let current = terminal.getTerminal()
+        if current.cols > 0, current.rows > 0 {
+            Task { @MainActor in
+                await session.resize(cols: current.cols, rows: current.rows)
+            }
         }
     }
 
