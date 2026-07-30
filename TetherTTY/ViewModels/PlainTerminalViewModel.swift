@@ -9,12 +9,19 @@ final class PlainTerminalViewModel: ObservableObject {
     private let request: TerminalConnectionRequest
     private let sshClient: SSHClient
     private var connectedSession: SSHSession?
+    private let reconnectGrace: TimeInterval
+    private var backgroundedAt: Date?
 
     let terminal = SSHTerminalView(frame: .zero)
 
-    init(request: TerminalConnectionRequest, sshClient: SSHClient = SwiftNIOSSHClient()) {
+    init(
+        request: TerminalConnectionRequest,
+        sshClient: SSHClient = SwiftNIOSSHClient(),
+        reconnectGrace: TimeInterval = 2
+    ) {
         self.request = request
         self.sshClient = sshClient
+        self.reconnectGrace = reconnectGrace
 
         terminal.onSend = { [weak self] bytes in
             self?.sendBytes(bytes)
@@ -29,35 +36,76 @@ final class PlainTerminalViewModel: ObservableObject {
         do {
             try await Task.sleep(nanoseconds: 120_000_000)
             state = .authenticating
+            try await openAndWireShell()
+        } catch {
+            state = .failed(error.localizedDescription)
+        }
+    }
 
-            var shell = try await sshClient.openShell(
-                SSHShellRequest(
-                    host: request.connection.host,
-                    port: request.connection.port,
-                    username: request.connection.username,
-                    password: request.password
-                )
+    private func openAndWireShell() async throws {
+        var shell = try await sshClient.openShell(
+            SSHShellRequest(
+                host: request.connection.host,
+                port: request.connection.port,
+                username: request.connection.username,
+                password: request.password
             )
+        )
 
-            if state == .disconnected {
-                await shell.disconnect()
-                return
+        if state == .disconnected {
+            await shell.disconnect()
+            return
+        }
+
+        shell.onDisconnect = { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.state = .disconnected
             }
+        }
 
-            shell.onDisconnect = { [weak self] in
-                Task { @MainActor [weak self] in
-                    self?.state = .disconnected
-                }
-            }
+        connectedSession = shell
+        session = shell
+        wireSessionOutput(shell)
+        state = .terminalOpen
 
-            connectedSession = shell
-            session = shell
-            wireSessionOutput(shell)
-            state = .terminalOpen
+        if let startupCommand = request.startupCommand {
+            try? await shell.send(Array((startupCommand + "\n").utf8))
+        }
+    }
 
-            if let startupCommand = request.startupCommand {
-                try? await shell.send(Array((startupCommand + "\n").utf8))
-            }
+    func applicationDidEnterBackground() {
+        backgroundedAt = Date()
+    }
+
+    func applicationWillEnterForeground() async {
+        guard let backgroundedAt else { return }
+        let elapsed = Date().timeIntervalSince(backgroundedAt)
+        self.backgroundedAt = nil
+
+        switch state {
+        case .terminalOpen where elapsed < reconnectGrace:
+            return                       // brief background: assume socket survived
+        case .terminalOpen, .disconnected, .failed:
+            await reattach()
+        default:
+            return                       // .idle/.connecting/.authenticating/.reconnecting: leave in-flight work alone
+        }
+    }
+
+    private func reattach() async {
+        // CRITICAL: detach the stale session's callbacks BEFORE disconnecting it,
+        // otherwise its delayed onDisconnect fires later and clobbers our state back to .disconnected.
+        if var old = connectedSession {
+            old.onOutput = nil
+            old.onDisconnect = nil
+            await old.disconnect()
+        }
+        connectedSession = nil
+        session = nil
+        state = .reconnecting
+
+        do {
+            try await openAndWireShell()
         } catch {
             state = .failed(error.localizedDescription)
         }

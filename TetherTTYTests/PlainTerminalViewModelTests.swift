@@ -108,6 +108,74 @@ final class PlainTerminalViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.state, .disconnected)
     }
 
+    func testForegroundAfterGraceReattaches() async {
+        let session = StubSSHSession()
+        let client = CountingSSHClient(session: session)
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(startupCommand: "tmux attach-session -t work"),
+            sshClient: client,
+            reconnectGrace: 0
+        )
+
+        await viewModel.connect()
+        XCTAssertEqual(viewModel.state, .terminalOpen)
+        XCTAssertEqual(client.openShellCallCount, 1)
+
+        viewModel.applicationDidEnterBackground()
+        await viewModel.applicationWillEnterForeground()
+
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(client.openShellCallCount, 2)
+        XCTAssertEqual(viewModel.state, .terminalOpen)
+        XCTAssertEqual(session.sentBytes, Array("tmux attach-session -t work\n".utf8))
+    }
+
+    func testBriefForegroundWithinGraceDoesNotReattach() async {
+        let session = StubSSHSession()
+        let client = CountingSSHClient(session: session)
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(),
+            sshClient: client,
+            reconnectGrace: 1000
+        )
+
+        await viewModel.connect()
+        XCTAssertEqual(viewModel.state, .terminalOpen)
+        XCTAssertEqual(client.openShellCallCount, 1)
+
+        viewModel.applicationDidEnterBackground()
+        await viewModel.applicationWillEnterForeground()
+
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(client.openShellCallCount, 1)
+        XCTAssertEqual(viewModel.state, .terminalOpen)
+    }
+
+    func testForegroundWhileDisconnectedReattaches() async {
+        let session = StubSSHSession()
+        let client = CountingSSHClient(session: session)
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(),
+            sshClient: client,
+            reconnectGrace: 0
+        )
+
+        await viewModel.connect()
+        XCTAssertEqual(viewModel.state, .terminalOpen)
+        XCTAssertEqual(client.openShellCallCount, 1)
+
+        session.onDisconnect?()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(viewModel.state, .disconnected)
+
+        viewModel.applicationDidEnterBackground()
+        await viewModel.applicationWillEnterForeground()
+
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(client.openShellCallCount, 2)
+        XCTAssertEqual(viewModel.state, .terminalOpen)
+    }
+
     private func terminalRequest(startupCommand: String? = nil) -> TerminalConnectionRequest {
         TerminalConnectionRequest(
             connection: Connection(alias: "Laptop", host: "192.0.2.42", username: "lukas"),
@@ -126,6 +194,24 @@ struct StubSSHClient: SSHClient {
 
     func execute(_ request: SSHShellRequest, command: String) async throws -> SSHExecResult {
         SSHExecResult(stdout: "stub output for: \(command)\n", stderr: "", exitStatus: 0)
+    }
+}
+
+final class CountingSSHClient: SSHClient {
+    private(set) var openShellCallCount = 0
+    let session: SSHSession
+
+    init(session: SSHSession) {
+        self.session = session
+    }
+
+    func openShell(_ request: SSHShellRequest) async throws -> SSHSession {
+        openShellCallCount += 1
+        return session
+    }
+
+    func execute(_ request: SSHShellRequest, command: String) async throws -> SSHExecResult {
+        SSHExecResult(stdout: "", stderr: "", exitStatus: 0)
     }
 }
 

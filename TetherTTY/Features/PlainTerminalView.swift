@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PlainTerminalView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var viewModel: PlainTerminalViewModel
 
     @State private var showKeyboard = false
@@ -29,6 +30,10 @@ struct PlainTerminalView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(red: 0.04, green: 0.04, blue: 0.08))
 
+            if viewModel.state == .reconnecting {
+                reconnectingBanner
+            }
+
             if viewModel.state == .disconnected {
                 disconnectedFooter
             }
@@ -40,6 +45,16 @@ struct PlainTerminalView: View {
                 viewModel.terminal.resignFirstResponder()
             }
         }
+        .onChange(of: scenePhase) { _, newPhase in
+            switch newPhase {
+            case .background:
+                viewModel.applicationDidEnterBackground()
+            case .active:
+                Task { await viewModel.applicationWillEnterForeground() }
+            default:
+                break
+            }
+        }
         .task {
             await viewModel.connect()
         }
@@ -49,6 +64,21 @@ struct PlainTerminalView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
             showKeyboard = true
         }
+    }
+
+    private var reconnectingBanner: some View {
+        HStack(spacing: 8) {
+            ProgressView()
+                .tint(AbyssalTheme.pearlAqua)
+
+            Text("Reconnecting to your session…")
+                .font(.system(.subheadline, design: .rounded))
+                .foregroundStyle(AbyssalTheme.bone.opacity(0.72))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity)
+        .background(AbyssalTheme.deepSpaceBlue)
     }
 
     private var disconnectedFooter: some View {

@@ -5,6 +5,7 @@ enum TerminalConnectionState: Equatable {
     case connecting
     case authenticating
     case terminalOpen
+    case reconnecting
     case disconnected
     case failed(String)
 
@@ -14,6 +15,7 @@ enum TerminalConnectionState: Equatable {
         case .connecting: "Connecting"
         case .authenticating: "Authenticating"
         case .terminalOpen: "Terminal Open"
+        case .reconnecting: "Reconnecting"
         case .disconnected: "Disconnected"
         case .failed: "Failed"
         }
