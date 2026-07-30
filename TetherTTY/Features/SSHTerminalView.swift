@@ -6,9 +6,17 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate {
     var onSend: (([UInt8]) -> Void)?
 
     private var scrollReconcilePending = false
+    private var indirectScrollAccumulator: CGFloat = 0
 
     private static let terminalBg = UIColor(red: 0.04, green: 0.04, blue: 0.08, alpha: 1.0)
     private static let terminalFg = UIColor(red: 0.95, green: 0.95, blue: 0.90, alpha: 1.0)
+
+    private lazy var indirectScrollGesture: UIPanGestureRecognizer = {
+        let gesture = UIPanGestureRecognizer(target: self, action: #selector(handleIndirectScroll(_:)))
+        gesture.allowedScrollTypesMask = .all
+        gesture.maximumNumberOfTouches = 0
+        return gesture
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -17,6 +25,7 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate {
         nativeBackgroundColor = Self.terminalBg
         layer.backgroundColor = Self.terminalBg.cgColor
         nativeForegroundColor = Self.terminalFg
+        addGestureRecognizer(indirectScrollGesture)
     }
 
     override func layoutSubviews() {
@@ -52,6 +61,30 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate {
         let yDisp = getTerminal().buffer.yDisp
         scrollTo(row: yDisp, notifyAccessibility: false)
         setNeedsDisplay(bounds)
+    }
+
+    @objc private func handleIndirectScroll(_ gesture: UIPanGestureRecognizer) {
+        switch gesture.state {
+        case .began:
+            indirectScrollAccumulator = 0
+        case .changed:
+            let rows = max(1, getTerminal().rows)
+            let cellHeight = bounds.height / CGFloat(rows)
+            guard cellHeight > 0 else { return }
+            indirectScrollAccumulator += gesture.translation(in: self).y
+            gesture.setTranslation(.zero, in: self)
+            let lineDelta = Int(indirectScrollAccumulator / cellHeight)
+            if lineDelta != 0 {
+                indirectScrollAccumulator -= CGFloat(lineDelta) * cellHeight
+                if lineDelta > 0 {
+                    scrollUp(lines: lineDelta)      // content pulled down → reveal older history
+                } else {
+                    scrollDown(lines: -lineDelta)   // content pushed up → newer
+                }
+            }
+        default:
+            indirectScrollAccumulator = 0
+        }
     }
 
     func sizeChanged(source: TerminalView, newCols: Int, newRows: Int) {
