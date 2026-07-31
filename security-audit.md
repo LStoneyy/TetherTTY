@@ -1,13 +1,42 @@
 # Sicherheitsplan: TetherTTY
 
-**Status:** Plan / Ausstehend Umsetzung
+**Status:** In Umsetzung — Phasen 0, 1, 2, 3, 5, 6 implementiert; Phase 4 (SEC-04) als Restrisiko akzeptiert
 **Erstellt:** 2026-07-31
 **Projekt:** TetherTTY (iOS SSH Companion)
 **Repository:** `/Users/lukas/code/TetherTTY`
 **Build-System:** Xcode-Projekt (`TetherTTY.xcodeproj`), iOS 18.0+
 **SwiftNIO-SSH:** 0.14.1 | **SwiftTerm:** 1.15.0
 
-**Wichtig:** Dies ist ein reiner Plan. Keine Implementierung wurde angewendet. Alle Code-Referenzen beziehen sich auf den Stand des Repositorys zum Stichtag 2026-07-31.
+**Hinweis zur Umsetzung:** Dieses Dokument war ursprünglich ein reiner Plan. Die ursprünglichen Code-Referenzen beziehen sich auf den Repository-Stand zum Stichtag 2026-07-31. Die Remediation wird seither auf dem Branch `security-remediation` phasenweise umgesetzt (siehe Umsetzungsstatus).
+
+### Umsetzungsstatus (Stand 2026-07-31)
+
+| Phase | Umfang | Status |
+|---|---|---|
+| 0 | Baseline + Security-Regression-Fixtures | ✅ Umgesetzt |
+| 1 | SSH-Vertrauensgrenze (SEC-01, SEC-02, SEC-09) | ✅ Umgesetzt |
+| 2 | Terminal-Grenze (SEC-03, SEC-07, SEC-08) | ✅ Umgesetzt |
+| 3 | Ressourcen & Logging (SEC-05, SEC-06) | ✅ Umgesetzt |
+| 4 | Lifecycle & Data Exposure (SEC-04) | ⏭️ Ausgelassen — als Restrisiko akzeptiert (siehe unten) |
+| 5 | Input- & Data-Hardening | ✅ Umgesetzt |
+| 6 | Open-Source & Release-Ops (SEC-10) | ✅ Umgesetzt |
+
+Jede umgesetzte Phase ist ein eigener, reviewter Commit mit grünem Testlauf. Die Testsuite umfasst nach Phase 5 83 XCTest-Methoden (49 Baseline + 34 neue Security-Regressionstests). Der Full-History-Secrets-Scan (gitleaks, 36 Commits) meldete keine Secrets.
+
+### Formale Risikoakzeptanz: SEC-04 (Lifecycle / Data Exposure)
+
+Phase 4 wurde bewusst nicht umgesetzt, um den bestehenden Auto-Reattach-Komfort (nahtloses Wiederaufnehmen der Session beim App-Foreground) zu erhalten.
+
+- **Befund:** SEC-04 (Medium) — beim Wechsel in den Hintergrund wird kein Privacy-Cover gesetzt, der App-Lock wird bei Rückkehr aus dem Hintergrund nicht erneut erzwungen, und die serverseitige Session bleibt für den Reattach verfügbar.
+- **Auswirkung / Precondition:** Erfordert **physischen Zugriff auf ein entsperrtes, in den Hintergrund gelegtes Gerät** (Diebstahl/Shoulder-Surfing im entsperrten Zustand). Kein Netzwerk- oder Remote-Server-Vektor. Betroffen sind Terminal-Inhalt im App-Switcher-Snapshot sowie Zugriff auf Host-Liste und laufende Session ohne erneute Face-ID-Prüfung.
+- **Begründung der Akzeptanz:** Bewusste Abwägung zugunsten des Kern-Features (Auto-Reattach). Der Face-ID-Gate bleibt ein Eintritts-Gate.
+- **Besitzer:** Repository-Maintainer (LStoneyy).
+- **Datum der Akzeptanz:** 2026-07-31.
+- **Überprüfungsdatum:** 2027-01-31 (bzw. spätestens vor einem öffentlichen App-Store-Release neu bewerten).
+- **Auswirkung auf Gates:** Blockiert **nicht** das Repository-Release (Gate 1). Für Gate 2 (App Store) gilt SEC-04 als dokumentiertes, akzeptiertes Restrisiko; ein späterer App-Store-Release sollte Phase 4 entweder umsetzen oder diese Akzeptanz erneut bestätigen.
+- **Transparenz:** Das Restrisiko ist im README ("Threat model & known limitations") offen dokumentiert.
+
+**Wichtig:** Alle übrigen Code-Referenzen unten beziehen sich auf den ursprünglichen Audit-Stand (2026-07-31); nach der Umsetzung können sich Zeilennummern verschoben haben.
 
 ---
 
