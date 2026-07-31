@@ -20,6 +20,9 @@ final class InputValidationSecurityTests: XCTestCase {
         defaults = UserDefaults(suiteName: suiteName)!
         credentialStore = InMemoryCredentialStore()
         repository = LocalConnectionRepository(defaults: defaults, credentialStore: credentialStore)
+        // Mark the one-time known-hosts migration as already done in this test's isolated
+        // defaults, so constructing a HostListViewModel does not wipe an injected known-host store.
+        defaults.set(true, forKey: "known-hosts-migrated-to-real-v1")
     }
 
     override func tearDown() {
@@ -144,7 +147,7 @@ final class InputValidationSecurityTests: XCTestCase {
             knownHostStore: knownHostStore,
             fingerprintResolver: FixedFingerprintResolver(fingerprint: "SHA256:fp")
         )
-        let viewModel = HostListViewModel(repository: repository, hostKeyTrustEvaluator: evaluator)
+        let viewModel = HostListViewModel(repository: repository, hostKeyTrustEvaluator: evaluator, migrationDefaults: defaults)
 
         // Editing a non-endpoint field (alias) must NOT remove the existing pin.
         var aliasDraft = ConnectionDraft(connection: connection)
