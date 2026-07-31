@@ -37,7 +37,17 @@ final class HostListViewModel: ObservableObject {
 
     func save(_ draft: ConnectionDraft) {
         do {
-            try repository.saveConnection(draft.connection, password: draft.passwordForSaving)
+            // Load the pre-edit connection (if any) BEFORE saving, so we can tell whether the
+            // endpoint (host or port) changed and the old known-host pin is now stale.
+            let previous = try repository.loadConnections().first { $0.id == draft.id }
+            let connection = draft.connection
+
+            try repository.saveConnection(connection, password: draft.passwordForSaving)
+
+            if let previous, previous.host != connection.host || previous.port != connection.port {
+                try knownHostStore.removeHost(host: previous.host, port: previous.port)
+            }
+
             reload()
         } catch {
             errorMessage = "Could not save this tether."
@@ -140,22 +150,34 @@ struct ConnectionDraft: Equatable {
     }
 
     var isValid: Bool {
-        !alias.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-            !host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-            !username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        ConnectionInputValidation.isValidAlias(trimmedAlias) &&
+            ConnectionInputValidation.isValidHost(trimmedHost) &&
+            ConnectionInputValidation.isValidUsername(trimmedUsername) &&
             parsedPort != nil
     }
 
     var connection: Connection {
         Connection(
             id: id,
-            alias: alias.trimmingCharacters(in: .whitespacesAndNewlines),
-            host: host.trimmingCharacters(in: .whitespacesAndNewlines),
+            alias: trimmedAlias,
+            host: ConnectionInputValidation.normalizeHost(trimmedHost),
             port: parsedPort ?? 22,
-            username: username.trimmingCharacters(in: .whitespacesAndNewlines),
+            username: trimmedUsername,
             isFavorite: isFavorite,
             createdAt: createdAt
         )
+    }
+
+    private var trimmedAlias: String {
+        alias.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var trimmedHost: String {
+        host.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var trimmedUsername: String {
+        username.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     var passwordForSaving: String? {
@@ -164,7 +186,7 @@ struct ConnectionDraft: Equatable {
     }
 
     private var parsedPort: Int? {
-        guard let value = Int(port), (1...65535).contains(value) else {
+        guard let value = Int(port), ConnectionInputValidation.isValidPort(value) else {
             return nil
         }
 
