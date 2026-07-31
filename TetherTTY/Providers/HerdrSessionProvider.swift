@@ -53,8 +53,6 @@ struct RealHerdrSessionProvider: HerdrSessionProvider {
             ),
             command: "PATH=\"$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH\" herdr session list --json"
         )
-        print("[Herdr] raw output: \(result.stdout)")
-        print("[Herdr] stderr: \(result.stderr), exit: \(result.exitStatus)")
         let sessions = HerdrSessionParser.parse(result.stdout)
         let diagnostic: String? = {
             if result.exitStatus != 0 {

@@ -59,7 +59,7 @@ final class HerdrSessionParserTests: XCTestCase {
         let sessions = HerdrSessionParser.parse(output)
 
         XCTAssertEqual(sessions.map(\.displayName), ["default", "ops"])
-        XCTAssertEqual(sessions[0].startupCommand, "herdr session attach default")
+        XCTAssertEqual(sessions[0].startupAction?.renderStartupCommand(), "herdr session attach default")
     }
 
     func testParsesIdWhenNameMissing() {
@@ -125,10 +125,10 @@ final class HerdrSessionParserTests: XCTestCase {
             detail: "session · attached"
         )
 
-        XCTAssertEqual(session.startupCommand, "herdr session attach prod")
+        XCTAssertEqual(session.startupAction?.renderStartupCommand(), "herdr session attach prod")
     }
 
     func testStartupCommandForPlainShell() {
-        XCTAssertNil(TerminalSession.plainShellSession.startupCommand)
+        XCTAssertNil(TerminalSession.plainShellSession.startupAction)
     }
 }

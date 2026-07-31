@@ -129,8 +129,32 @@ xcodebuild test -project TetherTTY.xcodeproj -scheme TetherTTY \
 - **No backend.** All traffic is a direct SSH connection from your phone to your own machine. We do not run a server, collect telemetry, or track user activity.
 - **On-device storage.** Connections, host-key trust, and app state are stored locally on your iPhone.
 - **Keychain encryption.** SSH passwords are encrypted by iOS Keychain; not stored in plain text.
-- **Host-key pinning.** SSH host keys are verified using OpenSSH-style TOFU (trust-on-first-use); fingerprints are SHA256 and stored locally. A changed host key is rejected.
-- **Biometric gate.** Face ID protects access to your host list and credentials.
+- **Host-key pinning (fail-closed).** SSH host keys are verified using OpenSSH-style TOFU (trust-on-first-use); fingerprints are SHA256 and stored locally. An unknown host, a changed host key, or a trust-store read error is **rejected** — verification fails closed.
+- **Biometric gate.** Face ID protects access to your host list and credentials at launch.
+
+### Hardening
+
+The terminal boundary treats remote output as untrusted:
+
+- **No OSC 52 clipboard writes** — remote output cannot silently overwrite your iOS clipboard.
+- **Links open only over `https://`** after an explicit tap; all other URL schemes are rejected.
+- **Startup commands are typed and quoted** — session names are POSIX single-quote-escaped and control characters (NUL/CR/LF) are rejected, preventing command injection via crafted session names.
+- **Bounded remote output** — remote command output is capped (combined stdout+stderr) with an execution timeout, so a hostile or runaway server cannot exhaust memory or hang the app.
+- **No sensitive logging** — hostnames, usernames, key material, and command output are not written to logs.
+- **Input validation** — connection host/username/alias are length-limited, control-character-free, and scheme-prefix-rejected; hosts are normalized; stale host-key pins are cleaned up when an endpoint changes.
+
+### Threat model & known limitations
+
+TetherTTY's trust boundaries and the full security analysis are documented in
+[`security-audit.md`](security-audit.md). Notable residual risks:
+
+- **TOFU first contact.** On the very first connection to a host, the fingerprint is trusted on first use. Without out-of-band verification, a first-contact MITM is possible — verify the displayed SHA256 fingerprint against your server when in doubt.
+- **A fully compromised server** controls its own terminal output; TetherTTY limits dangerous local side effects but the output itself remains untrusted.
+- **Physical access to an unlocked, backgrounded device.** The Face ID gate is an *entry* gate; it is not re-challenged when returning from the background, and the app keeps the server-side session available for the seamless reattach described above. This is an accepted trade-off for convenience (tracked as SEC-04 in `security-audit.md`). If this matters to you, fully close the app when handing your unlocked phone to someone.
+
+### Reporting a vulnerability
+
+Please report security issues privately via GitHub Private Vulnerability Reporting — see [`SECURITY.md`](SECURITY.md).
 
 ## Non-Goals
 

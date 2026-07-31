@@ -74,7 +74,10 @@ final class PlainTerminalViewModel: ObservableObject {
         wireSessionOutput(shell)
         state = .terminalOpen
 
-        if let startupCommand = request.startupCommand {
+        // Rendering the startup action to an actual shell command string happens
+        // exactly once, here, at the SSH boundary. If validation fails, nothing
+        // is sent (never a partial/broken command).
+        if let startupCommand = request.startupAction?.renderStartupCommand() {
             try? await shell.send(Array((startupCommand + "\n").utf8))
         }
     }
@@ -165,7 +168,7 @@ final class PlainTerminalViewModel: ObservableObject {
         TerminalConnectionRequest(
             connection: request.connection,
             password: request.password,
-            startupCommand: nil
+            startupAction: nil
         )
     }
 

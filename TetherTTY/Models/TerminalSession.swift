@@ -12,12 +12,15 @@ struct TerminalSession: Identifiable, Equatable {
     let displayName: String
     let detail: String
 
-    var startupCommand: String? {
+    /// The typed startup action for this session, if any. Rendering this to an
+    /// actual shell command string happens exactly once, at the SSH boundary
+    /// (see `TerminalStartupAction.renderStartupCommand()`).
+    var startupAction: TerminalStartupAction? {
         switch provider {
         case .tmux(let name, _, _, _):
-            return "tmux attach-session -t \(name)"
+            return .tmuxAttach(sessionName: name)
         case .herdr(_, _, _, let attachCommand, _):
-            return attachCommand
+            return .herdrAttach(command: attachCommand)
         case .plainShell:
             return nil
         }

@@ -52,8 +52,6 @@ struct RealTmuxSessionProvider: TmuxSessionProvider {
             ),
             command: "PATH=\"$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH\" tmux list-sessions -F '#{session_name}\t#{session_windows}\t#{session_attached}\t#{session_created}'"
         )
-        print("[Tmux] raw output: \(result.stdout)")
-        print("[Tmux] stderr: \(result.stderr), exit: \(result.exitStatus)")
         let sessions = TmuxSessionParser.parse(result.stdout)
         let diagnostic: String? = {
             if result.exitStatus != 0 {

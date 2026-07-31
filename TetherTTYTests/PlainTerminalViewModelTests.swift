@@ -18,13 +18,13 @@ final class PlainTerminalViewModelTests: XCTestCase {
     func testStartupCommandSentAsBytes() async {
         let session = StubSSHSession()
         let viewModel = PlainTerminalViewModel(
-            request: terminalRequest(startupCommand: "tmux attach-session -t work"),
+            request: terminalRequest(startupAction: .tmuxAttach(sessionName: "work")),
             sshClient: StubSSHClient(session: session)
         )
 
         await viewModel.connect()
 
-        let expected = Array("tmux attach-session -t work\n".utf8)
+        let expected = Array("tmux attach-session -t 'work'\n".utf8)
         XCTAssertEqual(session.sentBytes, expected)
     }
 
@@ -83,13 +83,13 @@ final class PlainTerminalViewModelTests: XCTestCase {
 
     func testReconnectRequestHasNoStartupCommand() async {
         let viewModel = PlainTerminalViewModel(
-            request: terminalRequest(startupCommand: "tmux attach-session -t work"),
+            request: terminalRequest(startupAction: .tmuxAttach(sessionName: "work")),
             sshClient: StubSSHClient(session: StubSSHSession())
         )
 
         let reconnectRequest = viewModel.makeReconnectRequest()
 
-        XCTAssertNil(reconnectRequest.startupCommand)
+        XCTAssertNil(reconnectRequest.startupAction)
     }
 
     func testDisconnectCallbackSetsStateDisconnected() async {
@@ -112,7 +112,7 @@ final class PlainTerminalViewModelTests: XCTestCase {
         let session = StubSSHSession()
         let client = CountingSSHClient(session: session)
         let viewModel = PlainTerminalViewModel(
-            request: terminalRequest(startupCommand: "tmux attach-session -t work"),
+            request: terminalRequest(startupAction: .tmuxAttach(sessionName: "work")),
             sshClient: client,
             reconnectGrace: 0
         )
@@ -127,7 +127,7 @@ final class PlainTerminalViewModelTests: XCTestCase {
         try? await Task.sleep(nanoseconds: 100_000_000)
         XCTAssertEqual(client.openShellCallCount, 2)
         XCTAssertEqual(viewModel.state, .terminalOpen)
-        XCTAssertEqual(session.sentBytes, Array("tmux attach-session -t work\n".utf8))
+        XCTAssertEqual(session.sentBytes, Array("tmux attach-session -t 'work'\n".utf8))
     }
 
     func testBriefForegroundWithinGraceDoesNotReattach() async {
@@ -180,7 +180,7 @@ final class PlainTerminalViewModelTests: XCTestCase {
         let session = StubSSHSession()
         let client = FlakySSHClient(session: session)
         let viewModel = PlainTerminalViewModel(
-            request: terminalRequest(startupCommand: "tmux attach-session -t work"),
+            request: terminalRequest(startupAction: .tmuxAttach(sessionName: "work")),
             sshClient: client,
             reconnectGrace: 0,
             maxReattachAttempts: 3,
@@ -199,7 +199,7 @@ final class PlainTerminalViewModelTests: XCTestCase {
         try? await Task.sleep(nanoseconds: 100_000_000)
         XCTAssertEqual(client.openShellCallCount, 3)   // 1 initial + 1 failed + 1 successful
         XCTAssertEqual(viewModel.state, .terminalOpen)
-        XCTAssertEqual(session.sentBytes, Array("tmux attach-session -t work\n".utf8))
+        XCTAssertEqual(session.sentBytes, Array("tmux attach-session -t 'work'\n".utf8))
     }
 
     func testReattachExhaustsToDisconnected() async {
@@ -227,11 +227,11 @@ final class PlainTerminalViewModelTests: XCTestCase {
         XCTAssertEqual(client.openShellCallCount, 3)   // 1 initial + 2 reattach attempts
     }
 
-    private func terminalRequest(startupCommand: String? = nil) -> TerminalConnectionRequest {
+    private func terminalRequest(startupAction: TerminalStartupAction? = nil) -> TerminalConnectionRequest {
         TerminalConnectionRequest(
             connection: Connection(alias: "Laptop", host: "192.0.2.42", username: "lukas"),
             password: "secret",
-            startupCommand: startupCommand
+            startupAction: startupAction
         )
     }
 }

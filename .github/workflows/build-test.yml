@@ -1,0 +1,60 @@
+name: Build & Test
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+concurrency:
+  group: build-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build & Test (iOS Simulator)
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Select an available iPhone simulator
+        id: sim
+        run: |
+          # Pick the newest iPhone simulator the runner actually has, so the
+          # destination matches the installed runtime instead of a hard-coded
+          # device that may not exist on the runner image.
+          NAME=$(xcrun simctl list devices available \
+            | grep -E '^[[:space:]]+iPhone' \
+            | tail -1 \
+            | sed -E 's/ \(.*//; s/^[[:space:]]+//')
+          if [ -z "$NAME" ]; then
+            echo "No available iPhone simulator found" >&2
+            xcrun simctl list devices available >&2
+            exit 1
+          fi
+          echo "Using simulator: $NAME"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Build & test
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project TetherTTY.xcodeproj \
+            -scheme TetherTTY \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults
+          path: TestResults.xcresult
+          if-no-files-found: ignore
