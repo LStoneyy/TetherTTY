@@ -48,6 +48,7 @@
 		B20000000000000000000010 /* TerminalSecurityFixturesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000011 /* TerminalSecurityFixturesTests.swift */; };
 		B20000000000000000000011 /* ResourceLoggingSecurityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000012 /* ResourceLoggingSecurityTests.swift */; };
 		B20000000000000000000012 /* InputValidationSecurityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000013 /* InputValidationSecurityTests.swift */; };
+		B20000000000000000000013 /* RealHostKeyResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000014 /* RealHostKeyResolverTests.swift */; };
 		P30000000000000000000001 /* NIOSSH in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000001 /* NIOSSH */; };
 		P30000000000000000000002 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000002 /* NIOCore */; };
 		P30000000000000000000003 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000003 /* NIOPosix */; };
@@ -111,6 +112,7 @@
 		B10000000000000000000011 /* TerminalSecurityFixturesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSecurityFixturesTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000012 /* ResourceLoggingSecurityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResourceLoggingSecurityTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000013 /* InputValidationSecurityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputValidationSecurityTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000014 /* RealHostKeyResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealHostKeyResolverTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000031 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -284,6 +286,7 @@
 				B10000000000000000000011 /* TerminalSecurityFixturesTests.swift */,
 				B10000000000000000000012 /* ResourceLoggingSecurityTests.swift */,
 				B10000000000000000000013 /* InputValidationSecurityTests.swift */,
+				B10000000000000000000014 /* RealHostKeyResolverTests.swift */,
 			);
 			path = TetherTTYTests;
 			sourceTree = "<group>";
@@ -453,6 +456,7 @@
 				B20000000000000000000010 /* TerminalSecurityFixturesTests.swift in Sources */,
 				B20000000000000000000011 /* ResourceLoggingSecurityTests.swift in Sources */,
 				B20000000000000000000012 /* InputValidationSecurityTests.swift in Sources */,
+				B20000000000000000000013 /* RealHostKeyResolverTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

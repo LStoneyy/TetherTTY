@@ -89,51 +89,30 @@ final class RealHostKeyFingerprintResolver: HostKeyFingerprintResolver {
                 )
             }
 
+        // TCP connect, bounded by connectTimeout. A failure here simply throws — there is
+        // no dangling promise left to leak.
         let channel = try await bootstrap.connect(host: connection.host, port: connection.port).get()
 
-        let outcome: Result<NIOSSHPublicKey, Error>
-        do {
-            let hostKey = try await Self.awaitHostKey(delegate: delegate, eventLoop: channel.eventLoop)
-            outcome = .success(hostKey)
-        } catch {
-            outcome = .failure(error)
+        // Safety net: the capture connection normally closes itself once the host key has been
+        // validated and the (declined) user-auth completes. If the peer hangs mid-handshake,
+        // force it closed after the deadline so we never wait forever.
+        let deadlineTask = channel.eventLoop.scheduleTask(in: Self.captureDeadline) {
+            channel.close(promise: nil)
         }
 
-        // Guaranteed cleanup: this connection is capture-only and must never be left open,
-        // whether the capture succeeded, failed, or timed out.
-        try? await channel.close()
+        // Wait for the connection to finish: declined auth after key exchange, a peer close, a
+        // handshake error (NIOCloseOnErrorHandler), or our deadline force-close. The channel is
+        // guaranteed closed once this resolves, so the capture connection is never left open.
+        try? await channel.closeFuture.get()
+        deadlineTask.cancel()
 
-        switch outcome {
-        case .success(let hostKey):
-            return SHA256HostKeyFingerprintFormatter.format(hostKey)
-        case .failure(let error):
-            throw error
+        guard let hostKey = delegate.capturedKey else {
+            throw SSHClientError.connectionFailed(
+                "Could not read the host key from \(connection.host):\(connection.port). "
+                + "Check that the host is reachable and running SSH."
+            )
         }
-    }
-
-    private static func awaitHostKey(
-        delegate: HostKeyCaptureDelegate,
-        eventLoop: EventLoop
-    ) async throws -> NIOSSHPublicKey {
-        try await withCheckedThrowingContinuation { continuation in
-            var didResume = false
-            let timeoutTask = eventLoop.scheduleTask(in: captureDeadline) {
-                guard !didResume else { return }
-                didResume = true
-                continuation.resume(throwing: SSHClientError.connectionFailed("Host key capture timed out"))
-            }
-            // `delegate.hostKeyFuture` completes on the promise's own home event loop (a
-            // separate loop from `NIOSingletons.posixEventLoopGroup`), while the timeout above
-            // fires on `eventLoop` (the connection's channel event loop). Hop the future onto
-            // `eventLoop` so both completion paths run on the SAME thread; this makes the
-            // unsynchronized `didResume` guard race-free instead of a potential double-resume.
-            delegate.hostKeyFuture.hop(to: eventLoop).whenComplete { result in
-                guard !didResume else { return }
-                didResume = true
-                timeoutTask.cancel()
-                continuation.resume(with: result)
-            }
-        }
+        return SHA256HostKeyFingerprintFormatter.format(hostKey)
     }
 }
 
@@ -165,16 +144,29 @@ public struct SHA256HostKeyFingerprintFormatter {
     }
 }
 
+/// Captures the server's host key during key exchange. Deliberately holds **no** long-lived
+/// `EventLoopPromise`: an unfulfilled NIO promise triggers a fatal "leaking promise" error in
+/// debug builds whenever the connection fails before host-key validation is reached (unreachable
+/// host, wrong port, early handshake failure, …). Instead the key is stored in a lock-protected
+/// slot that the caller reads once the capture connection has closed.
 final class HostKeyCaptureDelegate: NIOSSHClientServerAuthenticationDelegate {
-    private let promise: EventLoopPromise<NIOSSHPublicKey>
-    var hostKeyFuture: EventLoopFuture<NIOSSHPublicKey> { promise.futureResult }
+    private let lock = NSLock()
+    private var _capturedKey: NIOSSHPublicKey?
 
-    init() {
-        promise = NIOSingletons.posixEventLoopGroup.next().makePromise(of: NIOSSHPublicKey.self)
+    /// The captured host key, or `nil` if the connection closed before key exchange reached
+    /// host-key validation. Safe to read from any thread.
+    var capturedKey: NIOSSHPublicKey? {
+        lock.lock()
+        defer { lock.unlock() }
+        return _capturedKey
     }
 
     func validateHostKey(hostKey: NIOSSHPublicKey, validationCompletePromise: EventLoopPromise<Void>) {
-        promise.succeed(hostKey)
+        lock.lock()
+        _capturedKey = hostKey
+        lock.unlock()
+        // Accept, so the handshake proceeds to the (declined) user-auth that then closes this
+        // capture-only connection.
         validationCompletePromise.succeed(())
     }
 }
