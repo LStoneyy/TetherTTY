@@ -97,15 +97,36 @@ struct SessionPickerView: View {
     }
 
     private var loadingState: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 18) {
+            ZStack {
+                Circle()
+                    .stroke(AbyssalTheme.pearlAqua.opacity(0.42), lineWidth: 1)
+                Circle()
+                    .stroke(AbyssalTheme.mintLeaf.opacity(0.72), lineWidth: 2)
+                    .padding(10)
+                Image(systemName: ConnectionPhase.loadingSessions.symbol)
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundStyle(AbyssalTheme.pearlAqua)
+            }
+            .frame(width: 72, height: 72)
+
             ProgressView()
                 .tint(AbyssalTheme.pacificCyan)
-            Text("Discovering sessions...")
-                .font(.system(.subheadline, design: .rounded))
-                .foregroundStyle(AbyssalTheme.bone.opacity(0.66))
+
+            VStack(spacing: 6) {
+                Text(ConnectionPhase.loadingSessions.title)
+                    .font(.system(.headline, design: .rounded))
+                    .foregroundStyle(AbyssalTheme.bone)
+
+                if let detail = ConnectionPhase.loadingSessions.detail {
+                    Text(detail)
+                        .font(.system(.subheadline, design: .rounded))
+                        .foregroundStyle(AbyssalTheme.bone.opacity(0.6))
+                }
+            }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 60)
+        .padding(.vertical, 48)
     }
 
     private func errorState(message: String) -> some View {

@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8069C046301D30A0008611CD /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000004 /* SwiftTerm */; };
+		8069C047301D30A0008611CD /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		8069C048301D30A0008611CD /* NIOSSH in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000001 /* NIOSSH */; };
+		8069C049301D30A0008611CD /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000004 /* SwiftTerm */; };
 		A20000000000000000000001 /* TetherTTYApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* TetherTTYApp.swift */; };
 		A20000000000000000000002 /* AppLockState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* AppLockState.swift */; };
 		A20000000000000000000003 /* HostSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003 /* HostSummary.swift */; };
@@ -27,24 +31,27 @@
 		A20000000000000000000018 /* KnownHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000019 /* KnownHost.swift */; };
 		A20000000000000000000019 /* KnownHostStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000020 /* KnownHostStore.swift */; };
 		A20000000000000000000020 /* HostKeyTrustEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000021 /* HostKeyTrustEvaluator.swift */; };
-		B20000000000000000000001 /* AbyssalThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* AbyssalThemeTests.swift */; };
-		B20000000000000000000002 /* ConnectionRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* ConnectionRepositoryTests.swift */; };
-		B20000000000000000000003 /* AppLockViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* AppLockViewModelTests.swift */; };
-		B20000000000000000000004 /* PlainTerminalViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000005 /* PlainTerminalViewModelTests.swift */; };
-		B20000000000000000000005 /* HostKeyTrustEvaluatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* HostKeyTrustEvaluatorTests.swift */; };
 		A20000000000000000000021 /* TerminalSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000022 /* TerminalSession.swift */; };
 		A20000000000000000000022 /* TmuxSessionParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000023 /* TmuxSessionParser.swift */; };
 		A20000000000000000000023 /* TmuxSessionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000024 /* TmuxSessionProvider.swift */; };
 		A20000000000000000000024 /* SessionPickerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000025 /* SessionPickerViewModel.swift */; };
 		A20000000000000000000025 /* SessionPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000026 /* SessionPickerView.swift */; };
-		B20000000000000000000006 /* TmuxSessionParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000007 /* TmuxSessionParserTests.swift */; };
 		A20000000000000000000026 /* HerdrSessionParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000027 /* HerdrSessionParser.swift */; };
 		A20000000000000000000027 /* HerdrSessionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000028 /* HerdrSessionProvider.swift */; };
 		A20000000000000000000028 /* SSHTerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000029 /* SSHTerminalView.swift */; };
+		A20000000000000000000031 /* ConnectionPhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000032 /* ConnectionPhase.swift */; };
+		A20000000000000000000032 /* ConnectionProgressOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000033 /* ConnectionProgressOverlay.swift */; };
+		A20000000000000000000029 /* TerminalStartupAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000030 /* TerminalStartupAction.swift */; };
+		A20000000000000000000030 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000031 /* PrivacyInfo.xcprivacy */; };
+		B20000000000000000000001 /* AbyssalThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* AbyssalThemeTests.swift */; };
+		B20000000000000000000002 /* ConnectionRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* ConnectionRepositoryTests.swift */; };
+		B20000000000000000000003 /* AppLockViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* AppLockViewModelTests.swift */; };
+		B20000000000000000000004 /* PlainTerminalViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000005 /* PlainTerminalViewModelTests.swift */; };
+		B20000000000000000000005 /* HostKeyTrustEvaluatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* HostKeyTrustEvaluatorTests.swift */; };
+		B20000000000000000000006 /* TmuxSessionParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000007 /* TmuxSessionParserTests.swift */; };
 		B20000000000000000000007 /* HerdrSessionParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000008 /* HerdrSessionParserTests.swift */; };
 		B20000000000000000000008 /* AppFlowIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000009 /* AppFlowIntegrationTests.swift */; };
 		B20000000000000000000009 /* HostKeySecurityFixturesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000010 /* HostKeySecurityFixturesTests.swift */; };
-		A20000000000000000000029 /* TerminalStartupAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000030 /* TerminalStartupAction.swift */; };
 		B20000000000000000000010 /* TerminalSecurityFixturesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000011 /* TerminalSecurityFixturesTests.swift */; };
 		B20000000000000000000011 /* ResourceLoggingSecurityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000012 /* ResourceLoggingSecurityTests.swift */; };
 		B20000000000000000000012 /* InputValidationSecurityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000013 /* InputValidationSecurityTests.swift */; };
@@ -55,7 +62,6 @@
 		P30000000000000000000004 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000002 /* NIOCore */; };
 		P30000000000000000000005 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000003 /* NIOPosix */; };
 		P30000000000000000000006 /* NIOEmbedded in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000005 /* NIOEmbedded */; };
-		A20000000000000000000030 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000031 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -90,40 +96,40 @@
 		A10000000000000000000019 /* KnownHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnownHost.swift; sourceTree = "<group>"; };
 		A10000000000000000000020 /* KnownHostStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnownHostStore.swift; sourceTree = "<group>"; };
 		A10000000000000000000021 /* HostKeyTrustEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostKeyTrustEvaluator.swift; sourceTree = "<group>"; };
+		A10000000000000000000022 /* TerminalSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSession.swift; sourceTree = "<group>"; };
+		A10000000000000000000023 /* TmuxSessionParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TmuxSessionParser.swift; sourceTree = "<group>"; };
+		A10000000000000000000024 /* TmuxSessionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TmuxSessionProvider.swift; sourceTree = "<group>"; };
+		A10000000000000000000025 /* SessionPickerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerViewModel.swift; sourceTree = "<group>"; };
+		A10000000000000000000026 /* SessionPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerView.swift; sourceTree = "<group>"; };
+		A10000000000000000000027 /* HerdrSessionParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HerdrSessionParser.swift; sourceTree = "<group>"; };
+		A10000000000000000000028 /* HerdrSessionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HerdrSessionProvider.swift; sourceTree = "<group>"; };
+		A10000000000000000000029 /* SSHTerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHTerminalView.swift; sourceTree = "<group>"; };
+		A10000000000000000000032 /* ConnectionPhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionPhase.swift; sourceTree = "<group>"; };
+		A10000000000000000000033 /* ConnectionProgressOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionProgressOverlay.swift; sourceTree = "<group>"; };
+		A10000000000000000000030 /* TerminalStartupAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalStartupAction.swift; sourceTree = "<group>"; };
+		A10000000000000000000031 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		B10000000000000000000001 /* AbyssalThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbyssalThemeTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000002 /* TetherTTYTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TetherTTYTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B10000000000000000000003 /* ConnectionRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionRepositoryTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000004 /* AppLockViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockViewModelTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000005 /* PlainTerminalViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlainTerminalViewModelTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000006 /* HostKeyTrustEvaluatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostKeyTrustEvaluatorTests.swift; sourceTree = "<group>"; };
-		A10000000000000000000022 /* TerminalSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSession.swift; sourceTree = "<group>"; };
-		A10000000000000000000023 /* TmuxSessionParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TmuxSessionParser.swift; sourceTree = "<group>"; };
-		A10000000000000000000024 /* TmuxSessionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TmuxSessionProvider.swift; sourceTree = "<group>"; };
-		A10000000000000000000025 /* SessionPickerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerViewModel.swift; sourceTree = "<group>"; };
-		A10000000000000000000026 /* SessionPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerView.swift; sourceTree = "<group>"; };
 		B10000000000000000000007 /* TmuxSessionParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TmuxSessionParserTests.swift; sourceTree = "<group>"; };
-		A10000000000000000000027 /* HerdrSessionParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HerdrSessionParser.swift; sourceTree = "<group>"; };
-		A10000000000000000000028 /* HerdrSessionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HerdrSessionProvider.swift; sourceTree = "<group>"; };
-		A10000000000000000000029 /* SSHTerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHTerminalView.swift; sourceTree = "<group>"; };
 		B10000000000000000000008 /* HerdrSessionParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HerdrSessionParserTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000009 /* AppFlowIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFlowIntegrationTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000010 /* HostKeySecurityFixturesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostKeySecurityFixturesTests.swift; sourceTree = "<group>"; };
-		A10000000000000000000030 /* TerminalStartupAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalStartupAction.swift; sourceTree = "<group>"; };
 		B10000000000000000000011 /* TerminalSecurityFixturesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSecurityFixturesTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000012 /* ResourceLoggingSecurityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResourceLoggingSecurityTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000013 /* InputValidationSecurityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputValidationSecurityTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000014 /* RealHostKeyResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealHostKeyResolverTests.swift; sourceTree = "<group>"; };
-		A10000000000000000000031 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A40000000000000000000001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8069C046301D30A0008611CD /* SwiftTerm in Frameworks */,
 				P30000000000000000000001 /* NIOSSH in Frameworks */,
 				P30000000000000000000002 /* NIOCore in Frameworks */,
 				P30000000000000000000003 /* NIOPosix in Frameworks */,
@@ -134,7 +140,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				P30000000000000000000001 /* NIOSSH in Frameworks */,
+				8069C048301D30A0008611CD /* NIOSSH in Frameworks */,
+				8069C047301D30A0008611CD /* (null) in Frameworks */,
+				8069C049301D30A0008611CD /* SwiftTerm in Frameworks */,
 				P30000000000000000000004 /* NIOCore in Frameworks */,
 				P30000000000000000000005 /* NIOPosix in Frameworks */,
 				P30000000000000000000006 /* NIOEmbedded in Frameworks */,
@@ -144,24 +152,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		C20000000000000000000001 = {
-			isa = PBXGroup;
-			children = (
-				A30000000000000000000001 /* TetherTTY */,
-				B30000000000000000000002 /* TetherTTYTests */,
-				C20000000000000000000002 /* Products */,
-			);
-			sourceTree = "<group>";
-		};
-		C20000000000000000000002 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				A10000000000000000000007 /* TetherTTY.app */,
-				B10000000000000000000002 /* TetherTTYTests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		A30000000000000000000001 /* TetherTTY */ = {
 			isa = PBXGroup;
 			children = (
@@ -190,8 +180,31 @@
 				A10000000000000000000019 /* KnownHost.swift */,
 				A10000000000000000000022 /* TerminalSession.swift */,
 				A10000000000000000000030 /* TerminalStartupAction.swift */,
+				A10000000000000000000032 /* ConnectionPhase.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		A30000000000000000000003 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000004 /* AbyssalTheme.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		A30000000000000000000004 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000005 /* AppShellView.swift */,
+				A10000000000000000000006 /* HostListView.swift */,
+				A10000000000000000000012 /* ConnectionEditorView.swift */,
+				A10000000000000000000018 /* PlainTerminalView.swift */,
+				A10000000000000000000026 /* SessionPickerView.swift */,
+				A10000000000000000000029 /* SSHTerminalView.swift */,
+				A10000000000000000000033 /* ConnectionProgressOverlay.swift */,
+			);
+			path = Features;
 			sourceTree = "<group>";
 		};
 		A30000000000000000000005 /* Persistence */ = {
@@ -232,6 +245,13 @@
 			path = Networking;
 			sourceTree = "<group>";
 		};
+		A30000000000000000000009 /* Terminal */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Terminal;
+			sourceTree = "<group>";
+		};
 		A30000000000000000000010 /* Providers */ = {
 			isa = PBXGroup;
 			children = (
@@ -241,34 +261,6 @@
 				A10000000000000000000028 /* HerdrSessionProvider.swift */,
 			);
 			path = Providers;
-			sourceTree = "<group>";
-		};
-		A30000000000000000000009 /* Terminal */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Terminal;
-			sourceTree = "<group>";
-		};
-		A30000000000000000000003 /* Theme */ = {
-			isa = PBXGroup;
-			children = (
-				A10000000000000000000004 /* AbyssalTheme.swift */,
-			);
-			path = Theme;
-			sourceTree = "<group>";
-		};
-		A30000000000000000000004 /* Features */ = {
-			isa = PBXGroup;
-			children = (
-				A10000000000000000000005 /* AppShellView.swift */,
-				A10000000000000000000006 /* HostListView.swift */,
-				A10000000000000000000012 /* ConnectionEditorView.swift */,
-				A10000000000000000000018 /* PlainTerminalView.swift */,
-				A10000000000000000000026 /* SessionPickerView.swift */,
-				A10000000000000000000029 /* SSHTerminalView.swift */,
-			);
-			path = Features;
 			sourceTree = "<group>";
 		};
 		B30000000000000000000002 /* TetherTTYTests */ = {
@@ -289,6 +281,24 @@
 				B10000000000000000000014 /* RealHostKeyResolverTests.swift */,
 			);
 			path = TetherTTYTests;
+			sourceTree = "<group>";
+		};
+		C20000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				A30000000000000000000001 /* TetherTTY */,
+				B30000000000000000000002 /* TetherTTYTests */,
+				C20000000000000000000002 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C20000000000000000000002 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000007 /* TetherTTY.app */,
+				B10000000000000000000002 /* TetherTTYTests.xctest */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -370,6 +380,10 @@
 			);
 			mainGroup = C20000000000000000000001;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh" */,
+				P10000000000000000000002 /* XCRemoteSwiftPackageReference "SwiftTerm" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C20000000000000000000002 /* Products */;
 			projectDirPath = "";
@@ -377,10 +391,6 @@
 			targets = (
 				A1B2C3D4E5F6071829304050 /* TetherTTY */,
 				B1B2C3D4E5F6071829304050 /* TetherTTYTests */,
-			);
-			packageReferences = (
-				P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh.git" */,
-				P10000000000000000000002 /* XCRemoteSwiftPackageReference "SwiftTerm.git" */,
 			);
 		};
 /* End PBXProject section */
@@ -436,6 +446,8 @@
 				A20000000000000000000026 /* HerdrSessionParser.swift in Sources */,
 				A20000000000000000000027 /* HerdrSessionProvider.swift in Sources */,
 				A20000000000000000000028 /* SSHTerminalView.swift in Sources */,
+				A20000000000000000000031 /* ConnectionPhase.swift in Sources */,
+				A20000000000000000000032 /* ConnectionProgressOverlay.swift in Sources */,
 				A20000000000000000000029 /* TerminalStartupAction.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -471,6 +483,98 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		A80000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5TFR2L29DY;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = TetherTTY;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "TetherTTY uses Face ID to protect access to saved SSH tethers.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.tethertty.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		A80000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5TFR2L29DY;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = TetherTTY;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "TetherTTY uses Face ID to protect access to saved SSH tethers.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.tethertty.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		B80000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.tethertty.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TetherTTY.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TetherTTY";
+			};
+			name = Debug;
+		};
+		B80000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.tethertty.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TetherTTY.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TetherTTY";
+			};
+			name = Release;
+		};
 		C80000000000000000000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -512,7 +616,10 @@
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1 $(inherited)";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -586,110 +693,9 @@
 			};
 			name = Release;
 		};
-		A80000000000000000000001 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = TetherTTY;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
-				INFOPLIST_KEY_NSFaceIDUsageDescription = "TetherTTY uses Face ID to protect access to saved SSH tethers.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
-				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.tethertty.app;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-			};
-			name = Debug;
-		};
-		A80000000000000000000002 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = TetherTTY;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
-				INFOPLIST_KEY_NSFaceIDUsageDescription = "TetherTTY uses Face ID to protect access to saved SSH tethers.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
-				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.tethertty.app;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-			};
-			name = Release;
-		};
-		B80000000000000000000001 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.tethertty.app.tests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TetherTTY.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TetherTTY";
-			};
-			name = Debug;
-		};
-		B80000000000000000000002 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.tethertty.app.tests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TetherTTY.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TetherTTY";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C70000000000000000000001 /* Build configuration list for PBXProject "TetherTTY" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				C80000000000000000000001 /* Debug */,
-				C80000000000000000000002 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		A70000000000000000000001 /* Build configuration list for PBXNativeTarget "TetherTTY" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -708,53 +714,62 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		C70000000000000000000001 /* Build configuration list for PBXProject "TetherTTY" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C80000000000000000000001 /* Debug */,
+				C80000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-        P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh.git" */ = {
-            isa = XCRemoteSwiftPackageReference;
-            repositoryURL = "https://github.com/apple/swift-nio-ssh.git";
-            requirement = {
-                kind = upToNextMajorVersion;
-                minimumVersion = 0.15.0;
-            };
-        };
-        P10000000000000000000002 /* XCRemoteSwiftPackageReference "SwiftTerm.git" */ = {
-            isa = XCRemoteSwiftPackageReference;
-            repositoryURL = "https://github.com/migueldeicaza/SwiftTerm.git";
-            requirement = {
-                kind = upToNextMajorVersion;
-                minimumVersion = 1.15.0;
-            };
-        };
+		P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio-ssh.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.15.0;
+			};
+		};
+		P10000000000000000000002 /* XCRemoteSwiftPackageReference "SwiftTerm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/migueldeicaza/SwiftTerm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.15.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-        P20000000000000000000001 /* NIOSSH */ = {
-            isa = XCSwiftPackageProductDependency;
-            package = P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh.git" */;
-            productName = NIOSSH;
-        };
-        P20000000000000000000002 /* NIOCore */ = {
-            isa = XCSwiftPackageProductDependency;
-            package = P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh.git" */;
-            productName = NIOCore;
-        };
-        P20000000000000000000003 /* NIOPosix */ = {
-            isa = XCSwiftPackageProductDependency;
-            package = P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh.git" */;
-            productName = NIOPosix;
-        };
-        P20000000000000000000004 /* SwiftTerm */ = {
-            isa = XCSwiftPackageProductDependency;
-            package = P10000000000000000000002 /* XCRemoteSwiftPackageReference "SwiftTerm.git" */;
-            productName = SwiftTerm;
-        };
-        P20000000000000000000005 /* NIOEmbedded */ = {
-            isa = XCSwiftPackageProductDependency;
-            package = P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh.git" */;
-            productName = NIOEmbedded;
-        };
+		P20000000000000000000001 /* NIOSSH */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh" */;
+			productName = NIOSSH;
+		};
+		P20000000000000000000002 /* NIOCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh" */;
+			productName = NIOCore;
+		};
+		P20000000000000000000003 /* NIOPosix */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh" */;
+			productName = NIOPosix;
+		};
+		P20000000000000000000004 /* SwiftTerm */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = P10000000000000000000002 /* XCRemoteSwiftPackageReference "SwiftTerm" */;
+			productName = SwiftTerm;
+		};
+		P20000000000000000000005 /* NIOEmbedded */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh" */;
+			productName = NIOEmbedded;
+		};
 /* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C10000000000000000000001 /* Project object */;

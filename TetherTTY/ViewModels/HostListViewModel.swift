@@ -6,6 +6,14 @@ final class HostListViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var hostKeyChallenge: HostKeyChallenge?
 
+    /// User-facing progress of an in-flight connect attempt, driving the progress overlay. `nil`
+    /// when no connect is being prepared.
+    @Published var connectPhase: ConnectionPhase?
+
+    /// Monotonic token used to invalidate a superseded/cancelled connect attempt: the async
+    /// `terminalRequest` only applies its final state if its captured generation still matches.
+    private var connectGeneration = 0
+
     private let repository: ConnectionRepository
     private let hostKeyTrustEvaluator: HostKeyTrustEvaluator
     private let knownHostStore: KnownHostStore
@@ -83,28 +91,57 @@ final class HostListViewModel: ObservableObject {
     }
 
     func terminalRequest(for connection: Connection) async -> TerminalConnectionRequest? {
+        connectGeneration += 1
+        let generation = connectGeneration
+        connectPhase = .verifyingHostKey
+
         do {
             guard let password = try repository.password(for: connection.id), !password.isEmpty else {
-                errorMessage = SSHClientError.missingPassword.localizedDescription
+                guard generation == connectGeneration else { return nil }
+                let message = SSHClientError.missingPassword.localizedDescription
+                errorMessage = message
+                connectPhase = .failed(message)
                 return nil
             }
 
-            switch try await hostKeyTrustEvaluator.evaluate(connection: connection) {
+            let decision = try await hostKeyTrustEvaluator.evaluate(connection: connection)
+
+            // If the attempt was cancelled or superseded while the capture was in flight, drop the
+            // result silently rather than clobbering the (now cleared / restarted) UI state.
+            guard generation == connectGeneration else { return nil }
+
+            switch decision {
             case .trusted:
                 errorMessage = nil
+                connectPhase = nil                    // hand off to the session-picker cover
                 return TerminalConnectionRequest(connection: connection, password: password)
             case .unknown(let challenge):
-                hostKeyChallenge = challenge
                 errorMessage = nil
+                connectPhase = nil                    // clear the overlay; the trust prompt takes over
+                hostKeyChallenge = challenge
                 return nil
             case .changed(let expected, let actual):
-                errorMessage = "Host key changed. Expected \(expected), got \(actual). Connection blocked."
+                let message = "Host key changed. Expected \(expected), got \(actual). Connection blocked."
+                errorMessage = message
+                connectPhase = .failed(message)
                 return nil
             }
         } catch {
-            errorMessage = "Could not verify this tether's host key."
+            guard generation == connectGeneration else { return nil }
+            let message = "Could not verify this tether's host key."
+            errorMessage = message
+            connectPhase = .failed(message)
             return nil
         }
+    }
+
+    /// Dismisses the progress overlay and invalidates any in-flight connect attempt so its late
+    /// result can no longer reopen the overlay or navigate. Also clears any connect-failure banner
+    /// so backing out of a failed attempt doesn't leave a stale warning on the host list.
+    func cancelConnect() {
+        connectGeneration += 1
+        connectPhase = nil
+        errorMessage = nil
     }
 
     func trustHostKey(_ challenge: HostKeyChallenge) -> TerminalConnectionRequest? {

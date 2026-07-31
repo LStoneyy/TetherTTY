@@ -16,6 +16,12 @@ struct HostListView: View {
     @StateObject private var viewModel = HostListViewModel()
     @State private var editorDraft: ConnectionDraft?
     @State private var terminalFlow: TerminalFlowStep?
+    /// The connection currently being prepared, kept so the progress overlay can show its address
+    /// and offer a retry.
+    @State private var connectingConnection: Connection?
+    /// Handle to the in-flight connect attempt so a new attempt or a cancel can supersede it, and
+    /// its stale continuation can bow out without clobbering newer state.
+    @State private var connectTask: Task<Void, Never>?
 
     var body: some View {
         NavigationStack {
@@ -36,13 +42,7 @@ struct HostListView: View {
                             HostCard(
                                 connection: connection,
                                 hasPassword: viewModel.hasPassword(for: connection),
-                                connect: {
-                                    Task {
-                                        if let request = await viewModel.terminalRequest(for: connection) {
-                                            terminalFlow = .sessionPicker(request)
-                                        }
-                                    }
-                                },
+                                connect: { startConnect(connection) },
                                 edit: { editorDraft = ConnectionDraft(connection: connection) },
                                 toggleFavorite: { viewModel.toggleFavorite(connection) },
                                 delete: { viewModel.delete(connection) }
@@ -103,7 +103,57 @@ struct HostListView: View {
                     }
                 )
             }
+            .overlay {
+                if let phase = viewModel.connectPhase {
+                    ConnectionProgressOverlay(
+                        symbol: phase.symbol,
+                        title: phase.title,
+                        subtitle: phase.subtitle(address: connectingConnection?.displayAddress),
+                        isError: phase.isFailure,
+                        onCancel: phase.isFailure ? nil : { cancelConnect() },
+                        onRetry: phase.isFailure ? retryConnect : nil,
+                        onBack: phase.isFailure ? { cancelConnect() } : nil
+                    )
+                    .transition(.opacity)
+                }
+            }
+            .animation(.easeInOut(duration: 0.22), value: viewModel.connectPhase)
         }
+    }
+
+    private func startConnect(_ connection: Connection) {
+        // Supersede any in-flight attempt so its continuation drops out (see the isCancelled guard
+        // below) instead of racing this one's `connectingConnection`.
+        connectTask?.cancel()
+        connectingConnection = connection
+        connectTask = Task {
+            let request = await viewModel.terminalRequest(for: connection)
+
+            // This attempt was superseded or cancelled while the capture was in flight — the newer
+            // attempt (or cancelConnect) now owns the shared state; touch nothing.
+            if Task.isCancelled { return }
+
+            if let request {
+                connectingConnection = nil
+                terminalFlow = .sessionPicker(request)
+            } else if viewModel.connectPhase == nil {
+                // Trust prompt took over: no overlay to keep alive, no failure to retry.
+                connectingConnection = nil
+            }
+            // Otherwise connectPhase == .failed: keep connectingConnection so Retry can reuse it.
+        }
+    }
+
+    private func retryConnect() {
+        guard let connection = connectingConnection else { return }
+        startConnect(connection)
+    }
+
+    private func cancelConnect() {
+        connectTask?.cancel()
+        connectTask = nil
+        viewModel.cancelConnect()
+        connectingConnection = nil
     }
 }
 

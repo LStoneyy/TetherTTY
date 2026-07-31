@@ -29,6 +29,17 @@ struct PlainTerminalView: View {
             TerminalViewRepresentable(terminal: viewModel.terminal)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(red: 0.04, green: 0.04, blue: 0.08))
+                .overlay {
+                    if viewModel.state == .connecting || viewModel.state == .authenticating {
+                        ConnectionProgressOverlay(
+                            symbol: ConnectionPhase.openingTerminal.symbol,
+                            title: ConnectionPhase.openingTerminal.title,
+                            subtitle: viewModel.connectionRequest.connection.displayAddress
+                        )
+                        .transition(.opacity)
+                    }
+                }
+                .animation(.easeInOut(duration: 0.22), value: viewModel.state)
 
             if viewModel.state == .reconnecting {
                 reconnectingBanner
