@@ -26,20 +26,19 @@ jobs:
       - name: Select an available iPhone simulator
         id: sim
         run: |
-          # Pick the newest iPhone simulator the runner actually has, so the
-          # destination matches the installed runtime instead of a hard-coded
-          # device that may not exist on the runner image.
-          NAME=$(xcrun simctl list devices available \
-            | grep -E '^[[:space:]]+iPhone' \
-            | tail -1 \
-            | sed -E 's/ \(.*//; s/^[[:space:]]+//')
-          if [ -z "$NAME" ]; then
+          # Pick an available iPhone simulator the runner actually has and
+          # target it by UDID. Selecting by name is fragile because device
+          # names legitimately contain parentheses (e.g. "iPhone SE (3rd
+          # generation)") that are easy to truncate; a UDID is unambiguous and
+          # matches whatever runtime the runner image ships.
+          UDID=$(xcrun simctl list devices available --json | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; ids=[x['udid'] for r in d for x in d[r] if x.get('isAvailable') and x['name'].startswith('iPhone')]; print(ids[-1] if ids else '')")
+          if [ -z "$UDID" ]; then
             echo "No available iPhone simulator found" >&2
             xcrun simctl list devices available >&2
             exit 1
           fi
-          echo "Using simulator: $NAME"
-          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "Using simulator UDID: $UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
       - name: Build & test
         run: |
@@ -47,7 +46,7 @@ jobs:
           xcodebuild test \
             -project TetherTTY.xcodeproj \
             -scheme TetherTTY \
-            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
             -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO
 
