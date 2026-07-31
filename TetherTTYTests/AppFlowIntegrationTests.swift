@@ -53,7 +53,6 @@ final class AppFlowIntegrationTests: XCTestCase {
         XCTAssertNil(terminalRequest)
         XCTAssertNotNil(hostListVM.hostKeyChallenge)
         XCTAssertEqual(hostListVM.hostKeyChallenge?.connection.id, connection.id)
-        XCTAssertEqual(hostListVM.hostKeyChallenge?.password, "secret")
         XCTAssertEqual(hostListVM.hostKeyChallenge?.fingerprint, "SHA256:test-fp")
 
         guard let trustedRequest = hostListVM.trustHostKey(hostListVM.hostKeyChallenge!) else {

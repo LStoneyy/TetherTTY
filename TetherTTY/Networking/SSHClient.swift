@@ -33,6 +33,8 @@ enum SSHClientError: LocalizedError, Equatable {
     case missingPassword
     case connectionFailed(String)
     case hostKeyChanged(expected: String, actual: String)
+    case hostKeyUnknown
+    case hostKeyStoreError
 
     var errorDescription: String? {
         switch self {
@@ -42,6 +44,10 @@ enum SSHClientError: LocalizedError, Equatable {
             message
         case .hostKeyChanged(let expected, let actual):
             "Host key changed!\nExpected: \(expected)\nActual: \(actual)"
+        case .hostKeyUnknown:
+            "Host key is unknown and was not trusted before connecting. Refusing to connect."
+        case .hostKeyStoreError:
+            "Could not read the known-hosts store. Refusing to connect for safety."
         }
     }
 }
@@ -495,12 +501,6 @@ final class SimplePasswordDelegate: NIOSSHClientUserAuthenticationDelegate {
     }
 }
 
-final class AcceptAllHostKeysDelegate: NIOSSHClientServerAuthenticationDelegate {
-    func validateHostKey(hostKey: NIOSSHPublicKey, validationCompletePromise: EventLoopPromise<Void>) {
-        validationCompletePromise.succeed(())
-    }
-}
-
 final class VerifyingHostKeyDelegate: NIOSSHClientServerAuthenticationDelegate {
     let knownHostStore: KnownHostStore
     let host: String
@@ -525,10 +525,17 @@ final class VerifyingHostKeyDelegate: NIOSSHClientServerAuthenticationDelegate {
                     validationCompletePromise.fail(SSHClientError.hostKeyChanged(expected: knownHost.fingerprint, actual: fingerprint))
                 }
             } else {
-                validationCompletePromise.succeed(())
+                // Fail-closed: an unknown host must never be silently trusted here.
+                // The higher-level TOFU flow (HostKeyTrustEvaluator + HostListViewModel)
+                // is responsible for showing the fingerprint to the user and explicitly
+                // persisting trust via KnownHostStore.trustHost(...) BEFORE this delegate
+                // is ever asked to validate a real connect/shell attempt for that host.
+                print("[SSH] hostkey: UNKNOWN host, refusing (fail-closed)")
+                validationCompletePromise.fail(SSHClientError.hostKeyUnknown)
             }
         } catch {
-            validationCompletePromise.succeed(())
+            print("[SSH] hostkey: known-hosts store read failed: \(error), refusing (fail-closed)")
+            validationCompletePromise.fail(SSHClientError.hostKeyStoreError)
         }
     }
 }

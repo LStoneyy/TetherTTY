@@ -75,7 +75,7 @@ final class HostListViewModel: ObservableObject {
                 return nil
             }
 
-            switch try await hostKeyTrustEvaluator.evaluate(connection: connection, password: password) {
+            switch try await hostKeyTrustEvaluator.evaluate(connection: connection) {
             case .trusted:
                 errorMessage = nil
                 return TerminalConnectionRequest(connection: connection, password: password)
@@ -97,7 +97,16 @@ final class HostListViewModel: ObservableObject {
         do {
             hostKeyChallenge = nil
             errorMessage = nil
-            return try hostKeyTrustEvaluator.trust(challenge)
+            try hostKeyTrustEvaluator.trust(challenge)
+
+            // The password is deliberately never carried through the host-key challenge.
+            // Reload it fresh from the Keychain now that the host is trusted.
+            guard let password = try repository.password(for: challenge.connection.id), !password.isEmpty else {
+                errorMessage = SSHClientError.missingPassword.localizedDescription
+                return nil
+            }
+
+            return TerminalConnectionRequest(connection: challenge.connection, password: password)
         } catch {
             errorMessage = "Could not save this host key."
             return nil

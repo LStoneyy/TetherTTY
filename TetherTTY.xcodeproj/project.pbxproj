@@ -43,9 +43,12 @@
 		A20000000000000000000028 /* SSHTerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000029 /* SSHTerminalView.swift */; };
 		B20000000000000000000007 /* HerdrSessionParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000008 /* HerdrSessionParserTests.swift */; };
 		B20000000000000000000008 /* AppFlowIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000009 /* AppFlowIntegrationTests.swift */; };
+		B20000000000000000000009 /* HostKeySecurityFixturesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000010 /* HostKeySecurityFixturesTests.swift */; };
 		P30000000000000000000001 /* NIOSSH in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000001 /* NIOSSH */; };
 		P30000000000000000000002 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000002 /* NIOCore */; };
 		P30000000000000000000003 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000003 /* NIOPosix */; };
+		P30000000000000000000004 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000002 /* NIOCore */; };
+		P30000000000000000000005 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000003 /* NIOPosix */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -97,6 +100,7 @@
 		A10000000000000000000029 /* SSHTerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHTerminalView.swift; sourceTree = "<group>"; };
 		B10000000000000000000008 /* HerdrSessionParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HerdrSessionParserTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000009 /* AppFlowIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFlowIntegrationTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000010 /* HostKeySecurityFixturesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostKeySecurityFixturesTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -118,6 +122,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				P30000000000000000000001 /* NIOSSH in Frameworks */,
+				P30000000000000000000004 /* NIOCore in Frameworks */,
+				P30000000000000000000005 /* NIOPosix in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -260,6 +266,7 @@
 				B10000000000000000000007 /* TmuxSessionParserTests.swift */,
 				B10000000000000000000008 /* HerdrSessionParserTests.swift */,
 				B10000000000000000000009 /* AppFlowIntegrationTests.swift */,
+				B10000000000000000000010 /* HostKeySecurityFixturesTests.swift */,
 			);
 			path = TetherTTYTests;
 			sourceTree = "<group>";
@@ -306,6 +313,8 @@
 			name = TetherTTYTests;
 			packageProductDependencies = (
 				P20000000000000000000001 /* NIOSSH */,
+				P20000000000000000000002 /* NIOCore */,
+				P20000000000000000000003 /* NIOPosix */,
 				P20000000000000000000004 /* SwiftTerm */,
 			);
 			productName = TetherTTYTests;
@@ -420,6 +429,7 @@
 				B20000000000000000000006 /* TmuxSessionParserTests.swift in Sources */,
 				B20000000000000000000007 /* HerdrSessionParserTests.swift in Sources */,
 				B20000000000000000000008 /* AppFlowIntegrationTests.swift in Sources */,
+				B20000000000000000000009 /* HostKeySecurityFixturesTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

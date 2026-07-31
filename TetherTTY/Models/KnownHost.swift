@@ -16,7 +16,6 @@ struct KnownHost: Codable, Equatable {
 struct HostKeyChallenge: Identifiable, Equatable {
     let id = UUID()
     let connection: Connection
-    let password: String
     let fingerprint: String
 }
 
