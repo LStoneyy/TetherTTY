@@ -1,0 +1,30 @@
+name: 💡 Feature request
+description: Suggest an idea or improvement for TetherTTY
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        TetherTTY is intentionally small — a focused bridge from your phone to a
+        running terminal session. Requests that keep that scope are most likely
+        to land.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the use case or pain point.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should TetherTTY do?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false

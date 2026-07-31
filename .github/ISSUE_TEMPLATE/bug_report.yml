@@ -1,0 +1,67 @@
+name: 🐛 Bug report
+description: Report a problem with TetherTTY
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. **Do not include passwords, private keys, real
+        hostnames, or sensitive terminal output.** For security vulnerabilities,
+        use private reporting instead (see SECURITY.md) — not a public issue.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug and what you expected instead.
+      placeholder: When I …, TetherTTY … but I expected …
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open …
+        2. Tap …
+        3. See …
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: iPhone model
+      placeholder: e.g. iPhone 15 Pro
+    validations:
+      required: true
+  - type: input
+    id: ios-version
+    attributes:
+      label: iOS version
+      placeholder: e.g. 18.5
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: TetherTTY version or commit
+      placeholder: e.g. commit 109685e
+    validations:
+      required: false
+  - type: dropdown
+    id: session-type
+    attributes:
+      label: Session type involved
+      options:
+        - Not relevant / unsure
+        - tmux
+        - herdr
+        - plain shell
+    validations:
+      required: false
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Screenshots or notes. Redact any sensitive values first.
+    validations:
+      required: false
