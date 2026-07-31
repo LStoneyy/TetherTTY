@@ -115,18 +115,27 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate {
 
     func scrolled(source: TerminalView, position: Double) {}
 
-    func clipboardCopy(source: TerminalView, content: Data) {
-        if let str = String(data: content, encoding: .utf8) {
-            UIPasteboard.general.string = str
-        }
-    }
+    // SEC-03: OSC 52 lets the remote (or anything echoed to the terminal) write
+    // arbitrary content to the system pasteboard. We intentionally do not wire
+    // this up to `UIPasteboard` at all — this is a pure no-op.
+    func clipboardCopy(source: TerminalView, content: Data) {}
 
     func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {}
 
     func requestOpenLink(source: TerminalView, link: String, params: [String: String]) {
-        if let url = URL(string: link) {
-            UIApplication.shared.open(url)
-        }
+        guard let url = Self.allowedURL(forLink: link) else { return }
+        UIApplication.shared.open(url)
+    }
+
+    // SEC-08: only allow opening links whose scheme is exactly `https`
+    // (case-insensitive). This rejects `http`, `file`, `javascript:`, `tel:`,
+    // and any other custom scheme. Pure and testable without invoking
+    // `UIApplication.shared.open`. SwiftTerm already requires an explicit user
+    // tap to trigger this, so there is no auto-open concern.
+    static func allowedURL(forLink link: String) -> URL? {
+        guard let url = URL(string: link), let scheme = url.scheme else { return nil }
+        guard scheme.lowercased() == "https" else { return nil }
+        return url
     }
 
     func rangeChanged(source: TerminalView, startY: Int, endY: Int) {}

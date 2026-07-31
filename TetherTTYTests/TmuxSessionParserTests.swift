@@ -92,10 +92,10 @@ final class TmuxSessionParserTests: XCTestCase {
             detail: "3 windows, 0 attached"
         )
 
-        XCTAssertEqual(session.startupCommand, "tmux attach-session -t work")
+        XCTAssertEqual(session.startupAction?.renderStartupCommand(), "tmux attach-session -t 'work'")
     }
 
     func testStartupCommandForPlainShell() {
-        XCTAssertNil(TerminalSession.plainShellSession.startupCommand)
+        XCTAssertNil(TerminalSession.plainShellSession.startupAction)
     }
 }

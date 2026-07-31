@@ -61,7 +61,7 @@ final class SessionPickerViewModel: ObservableObject {
         TerminalConnectionRequest(
             connection: request.connection,
             password: request.password,
-            startupCommand: session.startupCommand
+            startupAction: session.startupAction
         )
     }
 
@@ -69,7 +69,7 @@ final class SessionPickerViewModel: ObservableObject {
         TerminalConnectionRequest(
             connection: request.connection,
             password: request.password,
-            startupCommand: nil
+            startupAction: nil
         )
     }
 }

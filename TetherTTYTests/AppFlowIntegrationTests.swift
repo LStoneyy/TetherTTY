@@ -61,7 +61,7 @@ final class AppFlowIntegrationTests: XCTestCase {
         }
         XCTAssertEqual(trustedRequest.connection.id, connection.id)
         XCTAssertEqual(trustedRequest.password, "secret")
-        XCTAssertNil(trustedRequest.startupCommand)
+        XCTAssertNil(trustedRequest.startupAction)
         XCTAssertNil(hostListVM.hostKeyChallenge)
 
         let sessionPickerVM = SessionPickerViewModel(
@@ -97,7 +97,7 @@ final class AppFlowIntegrationTests: XCTestCase {
 
         let sessionRequest = sessionPickerVM.makeTerminalRequest(for: tmuxSession)
         XCTAssertEqual(sessionRequest.connection.id, connection.id)
-        XCTAssertEqual(sessionRequest.startupCommand, "tmux attach-session -t shell")
+        XCTAssertEqual(sessionRequest.startupAction?.renderStartupCommand(), "tmux attach-session -t 'shell'")
 
         let stubSession = StubSSHSession()
         let terminalVM = PlainTerminalViewModel(
@@ -112,7 +112,7 @@ final class AppFlowIntegrationTests: XCTestCase {
         XCTAssertEqual(terminalVM.state, TerminalConnectionState.terminalOpen)
         XCTAssertNotNil(terminalVM.session)
 
-        let expectedStartup = Array("tmux attach-session -t shell\n".utf8)
+        let expectedStartup = Array("tmux attach-session -t 'shell'\n".utf8)
         XCTAssertEqual(stubSession.sentBytes, expectedStartup)
 
         await terminalVM.disconnect()
@@ -122,7 +122,7 @@ final class AppFlowIntegrationTests: XCTestCase {
         let reconnectRequest = terminalVM.makeReconnectRequest()
         XCTAssertEqual(reconnectRequest.connection.id, connection.id)
         XCTAssertEqual(reconnectRequest.password, "secret")
-        XCTAssertNil(reconnectRequest.startupCommand)
+        XCTAssertNil(reconnectRequest.startupAction)
     }
 
     func testAppFlowWithHostKeyChangedBlocksConnection() async throws {
