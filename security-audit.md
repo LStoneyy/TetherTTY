@@ -1,13 +1,13 @@
 # Sicherheitsplan: TetherTTY
 
-**Status:** In Umsetzung — Phasen 0, 1, 2, 3, 5, 6 implementiert; Phase 4 (SEC-04) als Restrisiko akzeptiert
+**Status:** Abgeschlossen — Phasen 0–3, 5, 6 umgesetzt und in `main` gemergt; Repository öffentlich; Phase 4 (SEC-04) als Restrisiko akzeptiert. Gate 1 (Open-Source-Release) erfüllt.
 **Erstellt:** 2026-07-31
 **Projekt:** TetherTTY (iOS SSH Companion)
 **Repository:** `/Users/lukas/code/TetherTTY`
 **Build-System:** Xcode-Projekt (`TetherTTY.xcodeproj`), iOS 18.0+
 **SwiftNIO-SSH:** 0.14.1 | **SwiftTerm:** 1.15.0
 
-**Hinweis zur Umsetzung:** Dieses Dokument war ursprünglich ein reiner Plan. Die ursprünglichen Code-Referenzen beziehen sich auf den Repository-Stand zum Stichtag 2026-07-31. Die Remediation wird seither auf dem Branch `security-remediation` phasenweise umgesetzt (siehe Umsetzungsstatus).
+**Hinweis zur Umsetzung:** Dieses Dokument war ursprünglich ein reiner Plan. Die ursprünglichen Code-Referenzen beziehen sich auf den Repository-Stand zum Stichtag 2026-07-31. Die Remediation wurde phasenweise umgesetzt und ist vollständig in `main` gemergt (siehe Umsetzungsstatus). Nach der Umsetzung können sich Zeilennummern gegenüber den ursprünglichen Referenzen verschoben haben.
 
 ### Umsetzungsstatus (Stand 2026-07-31)
 
@@ -22,6 +22,19 @@
 | 6 | Open-Source & Release-Ops (SEC-10) | ✅ Umgesetzt |
 
 Jede umgesetzte Phase ist ein eigener, reviewter Commit mit grünem Testlauf. Die Testsuite umfasst nach Phase 5 83 XCTest-Methoden (49 Baseline + 34 neue Security-Regressionstests). Der Full-History-Secrets-Scan (gitleaks, 36 Commits) meldete keine Secrets.
+
+### Release-Status: Gate 1 (Open-Source) erfüllt
+
+Alle Phasen sind über einzeln reviewte Pull Requests in `main` gemergt; die CI-Pipeline (GitHub Actions, `Build & Test`) läuft grün. Konkret erfüllt:
+
+- **Code:** Alle High/Medium-Befunde behoben; SEC-04 als dokumentiertes Restrisiko akzeptiert (siehe unten).
+- **Repository:** öffentlich; `SECURITY.md` (GitHub Private Vulnerability Reporting **aktiviert**), `CONTRIBUTING.md`, `.github/CODEOWNERS`.
+- **Automatisierung:** GitHub Actions Build/Test bei Push und PR; Dependabot für SPM und GitHub Actions aktiv (u. a. Bump auf swift-nio-ssh 0.15.0 mit grüner Testsuite verifiziert).
+- **Governance:** Branch Protection auf `main` — Pflicht-Statuscheck `Build & Test (iOS Simulator)`, Review-Pflicht mit Code-Owner-Review, kein Force-Push/Delete, `enforce_admins: false` (Inhaber-Bypass für eigene PRs).
+- **Secrets:** gitleaks Full-History sauber; keine Signierungs-/Provisioning-Artefakte getrackt.
+- **Privacy:** `PrivacyInfo.xcprivacy` mit deklarierter UserDefaults-Nutzung (CA92.1), kein Tracking, keine gesammelten Datentypen.
+
+Offen bleibt ausschließlich **Gate 2 (App Store)** — nicht release-blockierend für Open Source: Test auf physischem Gerät (Background/App-Switcher, OSC-52-Regression, Host-Key-Flow), Verifikation der NIO/SwiftTerm Required-Reason-APIs im Xcode-Archive-Privacy-Report, App-Store-Privacy-Labels sowie die erneute Bewertung von SEC-04.
 
 ### Formale Risikoakzeptanz: SEC-04 (Lifecycle / Data Exposure)
 
