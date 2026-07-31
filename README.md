@@ -25,6 +25,7 @@ All data stays local — connections, credentials, and host-key trust are stored
 * **Real SSH over SwiftNIO** — authenticated, password-based SSH connections using the SwiftNIO SSH library (0.14.1), no mock layers.
 * **Terminal emulation** — full VT100/xterm terminal (SwiftTerm 1.15.0) rendered natively in SwiftUI, with keyboard accessory row for control characters.
 * **Session discovery** — automatic discovery of running `tmux` and `herdr` sessions by executing real CLI commands and parsing output; attach with a single tap.
+* **Seamless reattach** — lock your phone or background the app, then come back and pick up exactly where you left off: TetherTTY silently re-establishes the SSH connection and re-attaches to the same `tmux`/`herdr` session, no manual re-selection. See [Persistent Sessions](#persistent-sessions).
 * **Host-key trust** — OpenSSH-style trust-on-first-use (TOFU); SHA256 host-key fingerprints are locally pinned and verified on each connection.
 * **Face ID app lock** — biometric unlock gate before accessing your host list, adding a security layer for sensitive credentials.
 * **Keychain credentials** — SSH passwords are encrypted and stored per connection using iOS Keychain.
@@ -42,6 +43,22 @@ All data stays local — connections, credentials, and host-key trust are stored
 6. **Pick a session** — select an existing session or open a plain shell.
 7. **Terminal** — SSH shell opens with full terminal emulation and keyboard extras.
 8. **Reconnect** — disconnect or reconnect at any time; returns to the session picker.
+9. **Lock & resume** — lock your phone and unlock later; TetherTTY reattaches to the same session automatically (see below).
+
+## Persistent Sessions
+
+Lock your phone in the middle of a build, unlock it later, and your session is still right there — TetherTTY reconnects and re-attaches without sending you back to the session picker.
+
+**Why it works this way.** iOS suspends an app shortly after it goes to the background, which closes the underlying SSH socket — a truly always-open connection is not possible on iOS. TetherTTY does not pretend otherwise. Instead it leans on the fact that your session lives on the **server**: `tmux` and `herdr` keep running regardless of whether a client is attached. When you return to the app, TetherTTY opens a fresh SSH connection and re-runs the same attach command, dropping you back into the exact session you left. This is more robust than a nominally "kept-open" connection — it also survives network changes and idle timeouts.
+
+**Behavior:**
+
+- A short grace period (~2s) means a quick glance at your phone won't force a reconnect.
+- On return, a **Reconnecting…** indicator is shown while the session is restored. Reconnection is silent — no re-entering credentials within the same app session.
+- If reattach fails, TetherTTY retries a few times with exponential backoff, then falls back to a manual reconnect option.
+- **TCP keepalive** is enabled on the interactive connection so mid-session drops (e.g. Wi-Fi → cellular handoff) are detected in a bounded time rather than hanging.
+
+If iOS fully terminates the app in the background (e.g. under memory pressure), the next launch starts locked as usual — your server-side session is of course untouched and waiting.
 
 ## Architecture
 

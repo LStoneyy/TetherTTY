@@ -176,6 +176,57 @@ final class PlainTerminalViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.state, .terminalOpen)
     }
 
+    func testReattachSucceedsOnSecondAttempt() async {
+        let session = StubSSHSession()
+        let client = FlakySSHClient(session: session)
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(startupCommand: "tmux attach-session -t work"),
+            sshClient: client,
+            reconnectGrace: 0,
+            maxReattachAttempts: 3,
+            reattemptBackoff: 0
+        )
+
+        await viewModel.connect()
+        XCTAssertEqual(viewModel.state, .terminalOpen)
+        XCTAssertEqual(client.openShellCallCount, 1)
+
+        // Next reattach fails once, then succeeds.
+        client.failuresRemaining = 1
+        viewModel.applicationDidEnterBackground()
+        await viewModel.applicationWillEnterForeground()
+
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(client.openShellCallCount, 3)   // 1 initial + 1 failed + 1 successful
+        XCTAssertEqual(viewModel.state, .terminalOpen)
+        XCTAssertEqual(session.sentBytes, Array("tmux attach-session -t work\n".utf8))
+    }
+
+    func testReattachExhaustsToDisconnected() async {
+        let session = StubSSHSession()
+        let client = FlakySSHClient(session: session)
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(),
+            sshClient: client,
+            reconnectGrace: 0,
+            maxReattachAttempts: 2,
+            reattemptBackoff: 0
+        )
+
+        await viewModel.connect()
+        XCTAssertEqual(viewModel.state, .terminalOpen)
+        XCTAssertEqual(client.openShellCallCount, 1)
+
+        // Fail more times than maxReattachAttempts.
+        client.failuresRemaining = 5
+        viewModel.applicationDidEnterBackground()
+        await viewModel.applicationWillEnterForeground()
+
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(viewModel.state, .disconnected)
+        XCTAssertEqual(client.openShellCallCount, 3)   // 1 initial + 2 reattach attempts
+    }
+
     private func terminalRequest(startupCommand: String? = nil) -> TerminalConnectionRequest {
         TerminalConnectionRequest(
             connection: Connection(alias: "Laptop", host: "192.0.2.42", username: "lukas"),
@@ -207,6 +258,29 @@ final class CountingSSHClient: SSHClient {
 
     func openShell(_ request: SSHShellRequest) async throws -> SSHSession {
         openShellCallCount += 1
+        return session
+    }
+
+    func execute(_ request: SSHShellRequest, command: String) async throws -> SSHExecResult {
+        SSHExecResult(stdout: "", stderr: "", exitStatus: 0)
+    }
+}
+
+final class FlakySSHClient: SSHClient {
+    private(set) var openShellCallCount = 0
+    var failuresRemaining = 0
+    let session: SSHSession
+
+    init(session: SSHSession) {
+        self.session = session
+    }
+
+    func openShell(_ request: SSHShellRequest) async throws -> SSHSession {
+        openShellCallCount += 1
+        if failuresRemaining > 0 {
+            failuresRemaining -= 1
+            throw SSHClientError.connectionFailed("transient")
+        }
         return session
     }
 

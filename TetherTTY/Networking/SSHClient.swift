@@ -103,6 +103,12 @@ final class SwiftNIOSSHClient: SSHClient {
 
         let bootstrap = ClientBootstrap(group: group)
             .connectTimeout(.seconds(8))
+            // TCP keepalive: NIOSSH 0.14.1 exposes no public SSH-level keepalive
+            // (its global-request API is limited to TCP forwarding), so we rely on
+            // TCP-level keepalive to bound detection of silently dropped links
+            // (e.g. Wi-Fi -> cellular handoff) on the long-lived interactive shell
+            // instead of hanging indefinitely.
+            .channelOption(ChannelOptions.socketOption(.so_keepalive), value: 1)
             .channelInitializer { channel in
                 let sshHandler = NIOSSHHandler(
                     role: .client(.init(

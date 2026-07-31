@@ -10,6 +10,8 @@ final class PlainTerminalViewModel: ObservableObject {
     private let sshClient: SSHClient
     private var connectedSession: SSHSession?
     private let reconnectGrace: TimeInterval
+    private let maxReattachAttempts: Int
+    private let reattemptBackoff: TimeInterval
     private var backgroundedAt: Date?
 
     let terminal = SSHTerminalView(frame: .zero)
@@ -17,11 +19,15 @@ final class PlainTerminalViewModel: ObservableObject {
     init(
         request: TerminalConnectionRequest,
         sshClient: SSHClient = SwiftNIOSSHClient(),
-        reconnectGrace: TimeInterval = 2
+        reconnectGrace: TimeInterval = 2,
+        maxReattachAttempts: Int = 3,
+        reattemptBackoff: TimeInterval = 1
     ) {
         self.request = request
         self.sshClient = sshClient
         self.reconnectGrace = reconnectGrace
+        self.maxReattachAttempts = maxReattachAttempts
+        self.reattemptBackoff = reattemptBackoff
 
         terminal.onSend = { [weak self] bytes in
             self?.sendBytes(bytes)
@@ -104,11 +110,23 @@ final class PlainTerminalViewModel: ObservableObject {
         session = nil
         state = .reconnecting
 
-        do {
-            try await openAndWireShell()
-        } catch {
-            state = .failed(error.localizedDescription)
+        let attempts = max(1, maxReattachAttempts)
+        for attemptIndex in 0..<attempts {
+            do {
+                try await openAndWireShell()
+                return   // success: openAndWireShell set state to .terminalOpen
+            } catch {
+                guard attemptIndex < attempts - 1 else { break }
+                let delay = reattemptBackoff * pow(2, Double(attemptIndex))
+                if delay > 0 {
+                    try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                }
+                // remain in .reconnecting for the next attempt
+            }
         }
+
+        // All attempts exhausted: fall back to the manual reconnect UI (.disconnected footer).
+        state = .disconnected
     }
 
     private func wireSessionOutput(_ session: SSHSession) {
