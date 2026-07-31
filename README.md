@@ -9,8 +9,15 @@
 ![SSH](https://img.shields.io/badge/SwiftNIO_SSH-4F8A91?style=flat-square)
 ![Terminal](https://img.shields.io/badge/SwiftTerm-4F8A91?style=flat-square)
 ![License](https://img.shields.io/badge/License-Apache_2.0-D6E8DE?style=flat-square)
+![Status](https://img.shields.io/badge/status-private%20testing-F5A623?style=flat-square)
 
 </div>
+
+## Project status
+
+🧪 **In private testing.** The security remediation is complete and merged — all High/Medium findings are fixed (see [`security-audit.md`](security-audit.md)), and the repository has cleared its open-source gate: CI, branch protection, Dependabot, private vulnerability reporting, and a clean full-history secret scan.
+
+The app is currently being tested on-device (installed privately via Xcode). **Next up: preparing the App Store release** — on-device security verification, the privacy manifest and App Store privacy labels, and a re-evaluation of the accepted SEC-04 residual risk (see [`security-audit.md`](security-audit.md), Gate 2).
 
 ## Overview
 
