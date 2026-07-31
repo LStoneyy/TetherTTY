@@ -74,17 +74,37 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate {
             indirectScrollAccumulator += gesture.translation(in: self).y
             gesture.setTranslation(.zero, in: self)
             let lineDelta = Int(indirectScrollAccumulator / cellHeight)
-            if lineDelta != 0 {
-                indirectScrollAccumulator -= CGFloat(lineDelta) * cellHeight
-                if lineDelta > 0 {
-                    scrollUp(lines: lineDelta)      // content pulled down → reveal older history
-                } else {
-                    scrollDown(lines: -lineDelta)   // content pushed up → newer
-                }
+            guard lineDelta != 0 else { return }
+            indirectScrollAccumulator -= CGFloat(lineDelta) * cellHeight
+
+            let terminal = getTerminal()
+            if terminal.isCurrentBufferAlternate {
+                // The alternate screen buffer (herdr, vim, less, htop, …) has no local
+                // scrollback, so scrolling it locally does nothing. Translate the scroll
+                // into arrow-key presses for the running full-screen app instead.
+                sendScrollAsArrowKeys(lineDelta: lineDelta, applicationCursor: terminal.applicationCursor)
+            } else if lineDelta > 0 {
+                scrollUp(lines: lineDelta)      // content pulled down → reveal older history
+            } else {
+                scrollDown(lines: -lineDelta)   // content pushed up → newer
             }
         default:
             indirectScrollAccumulator = 0
         }
+    }
+
+    private func sendScrollAsArrowKeys(lineDelta: Int, applicationCursor: Bool) {
+        let count = min(abs(lineDelta), 40)   // cap to avoid flooding on a fast flick
+        guard count > 0 else { return }
+        let sequence: [UInt8] = lineDelta > 0
+            ? (applicationCursor ? EscapeSequences.moveUpApp : EscapeSequences.moveUpNormal)
+            : (applicationCursor ? EscapeSequences.moveDownApp : EscapeSequences.moveDownNormal)
+        var bytes: [UInt8] = []
+        bytes.reserveCapacity(sequence.count * count)
+        for _ in 0..<count {
+            bytes.append(contentsOf: sequence)
+        }
+        send(bytes)
     }
 
     func sizeChanged(source: TerminalView, newCols: Int, newRows: Int) {
