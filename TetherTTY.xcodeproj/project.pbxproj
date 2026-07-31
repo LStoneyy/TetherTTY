@@ -46,11 +46,13 @@
 		B20000000000000000000009 /* HostKeySecurityFixturesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000010 /* HostKeySecurityFixturesTests.swift */; };
 		A20000000000000000000029 /* TerminalStartupAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000030 /* TerminalStartupAction.swift */; };
 		B20000000000000000000010 /* TerminalSecurityFixturesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000011 /* TerminalSecurityFixturesTests.swift */; };
+		B20000000000000000000011 /* ResourceLoggingSecurityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000012 /* ResourceLoggingSecurityTests.swift */; };
 		P30000000000000000000001 /* NIOSSH in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000001 /* NIOSSH */; };
 		P30000000000000000000002 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000002 /* NIOCore */; };
 		P30000000000000000000003 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000003 /* NIOPosix */; };
 		P30000000000000000000004 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000002 /* NIOCore */; };
 		P30000000000000000000005 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000003 /* NIOPosix */; };
+		P30000000000000000000006 /* NIOEmbedded in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000005 /* NIOEmbedded */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -105,6 +107,7 @@
 		B10000000000000000000010 /* HostKeySecurityFixturesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostKeySecurityFixturesTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000030 /* TerminalStartupAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalStartupAction.swift; sourceTree = "<group>"; };
 		B10000000000000000000011 /* TerminalSecurityFixturesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSecurityFixturesTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000012 /* ResourceLoggingSecurityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResourceLoggingSecurityTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -128,6 +131,7 @@
 				P30000000000000000000001 /* NIOSSH in Frameworks */,
 				P30000000000000000000004 /* NIOCore in Frameworks */,
 				P30000000000000000000005 /* NIOPosix in Frameworks */,
+				P30000000000000000000006 /* NIOEmbedded in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -273,6 +277,7 @@
 				B10000000000000000000009 /* AppFlowIntegrationTests.swift */,
 				B10000000000000000000010 /* HostKeySecurityFixturesTests.swift */,
 				B10000000000000000000011 /* TerminalSecurityFixturesTests.swift */,
+				B10000000000000000000012 /* ResourceLoggingSecurityTests.swift */,
 			);
 			path = TetherTTYTests;
 			sourceTree = "<group>";
@@ -322,6 +327,7 @@
 				P20000000000000000000002 /* NIOCore */,
 				P20000000000000000000003 /* NIOPosix */,
 				P20000000000000000000004 /* SwiftTerm */,
+				P20000000000000000000005 /* NIOEmbedded */,
 			);
 			productName = TetherTTYTests;
 			productReference = B10000000000000000000002 /* TetherTTYTests.xctest */;
@@ -438,6 +444,7 @@
 				B20000000000000000000008 /* AppFlowIntegrationTests.swift in Sources */,
 				B20000000000000000000009 /* HostKeySecurityFixturesTests.swift in Sources */,
 				B20000000000000000000010 /* TerminalSecurityFixturesTests.swift in Sources */,
+				B20000000000000000000011 /* ResourceLoggingSecurityTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -730,6 +737,11 @@
             isa = XCSwiftPackageProductDependency;
             package = P10000000000000000000002 /* XCRemoteSwiftPackageReference "SwiftTerm.git" */;
             productName = SwiftTerm;
+        };
+        P20000000000000000000005 /* NIOEmbedded */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = P10000000000000000000001 /* XCRemoteSwiftPackageReference "swift-nio-ssh.git" */;
+            productName = NIOEmbedded;
         };
 /* End XCSwiftPackageProductDependency section */
 	};

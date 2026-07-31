@@ -21,7 +21,6 @@ final class HostListViewModel: ObservableObject {
         if !UserDefaults.standard.bool(forKey: "known-hosts-migrated-to-real-v1") {
             try? knownHostStore.clearAll()
             UserDefaults.standard.set(true, forKey: "known-hosts-migrated-to-real-v1")
-            print("[SSH] Cleared old simulated known_host entries")
         }
     
         reload()

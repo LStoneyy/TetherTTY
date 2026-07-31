@@ -156,15 +156,12 @@ final class CaptureOnlyUserAuthDelegate: NIOSSHClientUserAuthenticationDelegate 
 public struct SHA256HostKeyFingerprintFormatter {
     public static func format(_ key: NIOSSHPublicKey) -> String {
         let openSSHString = String(openSSHPublicKey: key)
-        print("[SSH] formatter: OpenSSH key string: \(openSSHString)")
         guard let base64Part = openSSHString.split(separator: " ").dropFirst().first,
               let rawData = Data(base64Encoded: String(base64Part)) else {
             return "SHA256:invalid-key"
         }
         let digest = SHA256.hash(data: rawData)
-        let fp = "SHA256:" + Data(digest).base64EncodedString()
-        print("[SSH] formatter: base64 length=\(base64Part.count), rawData length=\(rawData.count), fingerprint=\(fp)")
-        return fp
+        return "SHA256:" + Data(digest).base64EncodedString()
     }
 }
 

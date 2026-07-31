@@ -35,6 +35,8 @@ enum SSHClientError: LocalizedError, Equatable {
     case hostKeyChanged(expected: String, actual: String)
     case hostKeyUnknown
     case hostKeyStoreError
+    case outputLimitExceeded
+    case executionTimedOut
 
     var errorDescription: String? {
         switch self {
@@ -48,6 +50,10 @@ enum SSHClientError: LocalizedError, Equatable {
             "Host key is unknown and was not trusted before connecting. Refusing to connect."
         case .hostKeyStoreError:
             "Could not read the known-hosts store. Refusing to connect for safety."
+        case .outputLimitExceeded:
+            "The command produced more output than allowed and was stopped."
+        case .executionTimedOut:
+            "The command took too long to complete and was stopped."
         }
     }
 }
@@ -103,8 +109,6 @@ final class SwiftNIOSSHClient: SSHClient {
             throw SSHClientError.missingPassword
         }
 
-        print("[SSH] openShell connecting to \(request.host):\(request.port) as \(request.username)...")
-
         let handlerPromise = group.next().makePromise(of: NIOSSHHandler.self)
 
         let bootstrap = ClientBootstrap(group: group)
@@ -135,21 +139,17 @@ final class SwiftNIOSSHClient: SSHClient {
         let channel = try await bootstrap.connect(host: request.host, port: request.port).get()
         let sshHandler = try await handlerPromise.futureResult.get()
 
-        print("[SSH] openShell: connected, creating shell channel...")
-
         return try await withCheckedThrowingContinuation { cont in
             var didResume = false
             let timeout = channel.eventLoop.scheduleTask(in: .seconds(8)) {
                 guard !didResume else { return }
                 didResume = true
-                print("[SSH] openShell: timed out waiting for channel")
                 cont.resume(throwing: SSHClientError.connectionFailed("Shell channel setup timed out"))
             }
             channel.eventLoop.execute {
                 sshHandler.createChannel { childChannel, channelType in
                     timeout.cancel()
                     guard !didResume else { return childChannel.close().map { _ in () } }
-                    print("[SSH] openShell: channel type=\(channelType)")
                     guard channelType == .session else {
                         return childChannel.eventLoop.makeFailedFuture(
                             SSHClientError.connectionFailed("Unexpected channel type")
@@ -165,7 +165,6 @@ final class SwiftNIOSSHClient: SSHClient {
                                 rows: 24
                             )
                             try childChannel.pipeline.syncOperations.addHandler(shell)
-                            print("[SSH] openShell: shell handler added")
                         } catch {
                             guard !didResume else { return }
                             didResume = true
@@ -181,8 +180,6 @@ final class SwiftNIOSSHClient: SSHClient {
         guard !request.password.isEmpty else {
             throw SSHClientError.missingPassword
         }
-
-        print("[SSH] execute '\(command)' on \(request.host):\(request.port) as \(request.username)...")
 
         let handlerPromise = group.next().makePromise(of: NIOSSHHandler.self)
 
@@ -208,21 +205,17 @@ final class SwiftNIOSSHClient: SSHClient {
         let channel = try await bootstrap.connect(host: request.host, port: request.port).get()
         let sshHandler = try await handlerPromise.futureResult.get()
 
-        print("[SSH] execute: connected, creating exec channel...")
-
         let result: SSHExecResult = try await withCheckedThrowingContinuation { cont in
             var didResume = false
             let timeout = channel.eventLoop.scheduleTask(in: .seconds(8)) {
                 guard !didResume else { return }
                 didResume = true
-                print("[SSH] execute: timed out waiting for channel")
                 cont.resume(throwing: SSHClientError.connectionFailed("Command timed out"))
             }
             channel.eventLoop.execute {
                 sshHandler.createChannel { childChannel, channelType in
                     timeout.cancel()
                     guard !didResume else { return childChannel.close().map { _ in () } }
-                    print("[SSH] execute: channel type=\(channelType)")
                     guard channelType == .session else {
                         return childChannel.eventLoop.makeFailedFuture(
                             SSHClientError.connectionFailed("Unexpected channel type")
@@ -231,10 +224,12 @@ final class SwiftNIOSSHClient: SSHClient {
                     return childChannel.eventLoop.makeCompletedFuture {
                         _ = childChannel.setOption(ChannelOptions.allowRemoteHalfClosure, value: true)
                         do {
+                            // SEC-05: bounds combined stdout+stderr output and enforces an overall
+                            // exec deadline; both complete this continuation exactly once and
+                            // guarantee the channel is closed (see ExecCommandHandler below).
                             try childChannel.pipeline.syncOperations.addHandler(
                                 ExecCommandHandler(command: command, continuation: cont, allocator: childChannel.allocator)
                             )
-                            print("[SSH] execute: exec handler added")
                         } catch {
                             guard !didResume else { return }
                             didResume = true
@@ -252,23 +247,57 @@ final class SwiftNIOSSHClient: SSHClient {
 
 // MARK: - Exec Command Handler
 
+/// Drives a single remote `exec` channel to completion.
+///
+/// SEC-05: this handler bounds two unbounded resources a hostile or misbehaving remote command
+/// could otherwise exploit:
+///  - **Output**: stdout+stderr are capped at a combined `outputLimit` (default 1 MiB). Exceeding
+///    it completes with `.outputLimitExceeded` and closes the channel immediately instead of
+///    continuing to buffer remote-controlled bytes in memory.
+///  - **Time**: an overall `deadline` (default 15s) is scheduled on the channel's event loop when
+///    the handler is added and is cancelled on every completion path, so a hung/slow-drip command
+///    can't block the app indefinitely.
+///
+/// Every completion path (success, exit-signal, output-limit, timeout, transport error, or the
+/// channel going inactive without ever reporting a result) funnels through `complete(...)`, which
+/// uses the `didResume` guard to resume the continuation and close the channel EXACTLY ONCE. NIO
+/// invokes channel-handler callbacks serially on a single event-loop thread, so this guard is
+/// race-free without additional locking.
 final class ExecCommandHandler: ChannelDuplexHandler {
     typealias InboundIn = SSHChannelData
     typealias InboundOut = Never
     typealias OutboundIn = Never
     typealias OutboundOut = SSHChannelData
 
+    /// Combined stdout+stderr byte budget for a single exec invocation.
+    static let defaultOutputLimit = 1_048_576 // 1 MiB
+
+    /// Overall wall-clock budget for a single exec invocation (from handler-added to completion).
+    static let defaultDeadline: TimeAmount = .seconds(15)
+
     private let command: String
     private var output = ByteBuffer()
     private var errorOutput = ByteBuffer()
+    private var receivedBytes = 0
+    private let outputLimit: Int
+    private let deadline: TimeAmount
     private let continuation: CheckedContinuation<SSHExecResult, Error>
     private var didResume = false
+    private var deadlineTask: Scheduled<Void>?
 
-    init(command: String, continuation: CheckedContinuation<SSHExecResult, Error>, allocator: ByteBufferAllocator) {
+    init(
+        command: String,
+        continuation: CheckedContinuation<SSHExecResult, Error>,
+        allocator: ByteBufferAllocator,
+        outputLimit: Int = ExecCommandHandler.defaultOutputLimit,
+        deadline: TimeAmount = ExecCommandHandler.defaultDeadline
+    ) {
         self.command = command
         self.continuation = continuation
         self.output = allocator.buffer(capacity: 4096)
         self.errorOutput = allocator.buffer(capacity: 1024)
+        self.outputLimit = outputLimit
+        self.deadline = deadline
     }
 
     func handlerAdded(context: ChannelHandlerContext) {
@@ -276,11 +305,23 @@ final class ExecCommandHandler: ChannelDuplexHandler {
             SSHChannelRequestEvent.ExecRequest(command: command, wantReply: false),
             promise: nil
         )
+        deadlineTask = context.eventLoop.scheduleTask(in: deadline) { [weak self] in
+            self?.complete(context: context, result: .failure(SSHClientError.executionTimedOut))
+        }
     }
 
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+        guard !didResume else { return }
         let channelData = unwrapInboundIn(data)
         guard case .byteBuffer(var bytes) = channelData.data else { return }
+
+        let incoming = bytes.readableBytes
+        guard receivedBytes + incoming <= outputLimit else {
+            complete(context: context, result: .failure(SSHClientError.outputLimitExceeded))
+            return
+        }
+        receivedBytes += incoming
+
         switch channelData.type {
         case .channel:
             output.writeBuffer(&bytes)
@@ -294,33 +335,44 @@ final class ExecCommandHandler: ChannelDuplexHandler {
     func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
         switch event {
         case let exitStatus as SSHChannelRequestEvent.ExitStatus:
-            guard !didResume else { return }
-            didResume = true
-            let result = SSHExecResult(
+            complete(context: context, result: .success(SSHExecResult(
                 stdout: String(buffer: output),
                 stderr: String(buffer: errorOutput),
                 exitStatus: exitStatus.exitStatus
-            )
-            continuation.resume(returning: result)
-            context.close(promise: nil)
+            )))
         case _ as SSHChannelRequestEvent.ExitSignal:
-            guard !didResume else { return }
-            didResume = true
-            continuation.resume(returning: SSHExecResult(
+            complete(context: context, result: .success(SSHExecResult(
                 stdout: String(buffer: output),
                 stderr: String(buffer: errorOutput),
                 exitStatus: -1
-            ))
-            context.close(promise: nil)
+            )))
         default:
             context.fireUserInboundEventTriggered(event)
         }
     }
 
     func errorCaught(context: ChannelHandlerContext, error: Error) {
+        complete(context: context, result: .failure(error))
+    }
+
+    /// Defensive completion path: if the remote end drops the channel without ever sending an
+    /// `ExitStatus`/`ExitSignal` (and we haven't already completed via output-limit/timeout/error),
+    /// this ensures the continuation is still resumed instead of hanging forever.
+    func channelInactive(context: ChannelHandlerContext) {
+        complete(context: context, result: .failure(SSHClientError.connectionFailed("Command channel closed unexpectedly")))
+        context.fireChannelInactive()
+    }
+
+    private func complete(context: ChannelHandlerContext, result: Result<SSHExecResult, Error>) {
         guard !didResume else { return }
         didResume = true
-        continuation.resume(throwing: error)
+        deadlineTask?.cancel()
+        switch result {
+        case .success(let value):
+            continuation.resume(returning: value)
+        case .failure(let error):
+            continuation.resume(throwing: error)
+        }
         context.close(promise: nil)
     }
 }
@@ -486,13 +538,10 @@ final class SimplePasswordDelegate: NIOSSHClientUserAuthenticationDelegate {
     }
 
     func nextAuthenticationType(availableMethods: NIOSSHAvailableUserAuthenticationMethods, nextChallengePromise: EventLoopPromise<NIOSSHUserAuthenticationOffer?>) {
-        print("[SSH] auth: server offers methods \(availableMethods)")
         guard availableMethods.contains(.password) else {
-            print("[SSH] auth: password not available")
             nextChallengePromise.fail(SSHClientError.connectionFailed("Password authentication not available"))
             return
         }
-        print("[SSH] auth: sending password for \(username)")
         nextChallengePromise.succeed(NIOSSHUserAuthenticationOffer(
             username: username,
             serviceName: "ssh-connection",
@@ -514,14 +563,11 @@ final class VerifyingHostKeyDelegate: NIOSSHClientServerAuthenticationDelegate {
 
     func validateHostKey(hostKey: NIOSSHPublicKey, validationCompletePromise: EventLoopPromise<Void>) {
         let fingerprint = SHA256HostKeyFingerprintFormatter.format(hostKey)
-        print("[SSH] hostkey: fingerprint=\(fingerprint)")
         do {
             if let knownHost = try knownHostStore.knownHost(host: host, port: port) {
                 if knownHost.fingerprint == fingerprint {
-                    print("[SSH] hostkey: known and matches")
                     validationCompletePromise.succeed(())
                 } else {
-                    print("[SSH] hostkey: MISMATCH expected=\(knownHost.fingerprint) actual=\(fingerprint)")
                     validationCompletePromise.fail(SSHClientError.hostKeyChanged(expected: knownHost.fingerprint, actual: fingerprint))
                 }
             } else {
@@ -530,11 +576,9 @@ final class VerifyingHostKeyDelegate: NIOSSHClientServerAuthenticationDelegate {
                 // is responsible for showing the fingerprint to the user and explicitly
                 // persisting trust via KnownHostStore.trustHost(...) BEFORE this delegate
                 // is ever asked to validate a real connect/shell attempt for that host.
-                print("[SSH] hostkey: UNKNOWN host, refusing (fail-closed)")
                 validationCompletePromise.fail(SSHClientError.hostKeyUnknown)
             }
         } catch {
-            print("[SSH] hostkey: known-hosts store read failed: \(error), refusing (fail-closed)")
             validationCompletePromise.fail(SSHClientError.hostKeyStoreError)
         }
     }
@@ -543,7 +587,6 @@ final class VerifyingHostKeyDelegate: NIOSSHClientServerAuthenticationDelegate {
 final class NIOCloseOnErrorHandler: ChannelInboundHandler {
     typealias InboundIn = Any
     func errorCaught(context: ChannelHandlerContext, error: Error) {
-        print("[SSH] channel error: \(error)")
         context.close(promise: nil)
     }
 }
