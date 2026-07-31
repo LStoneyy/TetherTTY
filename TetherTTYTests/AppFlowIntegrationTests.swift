@@ -14,6 +14,10 @@ final class AppFlowIntegrationTests: XCTestCase {
         defaults = UserDefaults(suiteName: suiteName)!
         credentialStore = InMemoryCredentialStore()
         repository = LocalConnectionRepository(defaults: defaults, credentialStore: credentialStore)
+        // Mark the one-time known-hosts migration as already done in this test's isolated
+        // defaults, so constructing a HostListViewModel does not wipe an injected known-host
+        // store (which would otherwise make host-key tests order-dependent on a fresh simulator).
+        defaults.set(true, forKey: "known-hosts-migrated-to-real-v1")
     }
 
     override func tearDown() {
@@ -42,7 +46,8 @@ final class AppFlowIntegrationTests: XCTestCase {
         )
         let hostListVM = HostListViewModel(
             repository: repository,
-            hostKeyTrustEvaluator: hostKeyEvaluator
+            hostKeyTrustEvaluator: hostKeyEvaluator,
+            migrationDefaults: defaults
         )
 
         XCTAssertEqual(hostListVM.connections.count, 1)
@@ -138,7 +143,8 @@ final class AppFlowIntegrationTests: XCTestCase {
         )
         let hostListVM = HostListViewModel(
             repository: repository,
-            hostKeyTrustEvaluator: hostKeyEvaluator
+            hostKeyTrustEvaluator: hostKeyEvaluator,
+            migrationDefaults: defaults
         )
 
         let request = await hostListVM.terminalRequest(for: connection)
@@ -158,7 +164,8 @@ final class AppFlowIntegrationTests: XCTestCase {
         )
         let hostListVM = HostListViewModel(
             repository: repository,
-            hostKeyTrustEvaluator: hostKeyEvaluator
+            hostKeyTrustEvaluator: hostKeyEvaluator,
+            migrationDefaults: defaults
         )
 
         let request = await hostListVM.terminalRequest(for: connection)

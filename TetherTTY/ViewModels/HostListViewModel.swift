@@ -12,17 +12,22 @@ final class HostListViewModel: ObservableObject {
 
     init(
         repository: ConnectionRepository = LocalConnectionRepository(),
-        hostKeyTrustEvaluator: HostKeyTrustEvaluator = HostKeyTrustEvaluator()
+        hostKeyTrustEvaluator: HostKeyTrustEvaluator = HostKeyTrustEvaluator(),
+        migrationDefaults: UserDefaults = .standard
     ) {
         self.repository = repository
         self.hostKeyTrustEvaluator = hostKeyTrustEvaluator
         self.knownHostStore = hostKeyTrustEvaluator.knownHostStore
-    
-        if !UserDefaults.standard.bool(forKey: "known-hosts-migrated-to-real-v1") {
+
+        // One-time cleanup of legacy simulated known-host entries. The flag lives in an
+        // injectable UserDefaults so tests can isolate it: a fresh install / fresh CI simulator
+        // has this flag unset, which would otherwise wipe a test-injected known-host store on
+        // first init and make host-key tests order-dependent.
+        if !migrationDefaults.bool(forKey: "known-hosts-migrated-to-real-v1") {
             try? knownHostStore.clearAll()
-            UserDefaults.standard.set(true, forKey: "known-hosts-migrated-to-real-v1")
+            migrationDefaults.set(true, forKey: "known-hosts-migrated-to-real-v1")
         }
-    
+
         reload()
     }
 
