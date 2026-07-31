@@ -1,0 +1,4 @@
+# Code owners for TetherTTY.
+# The repository owner reviews all changes. When branch protection requires
+# code-owner review, pull requests from contributors need @LStoneyy's approval.
+* @LStoneyy
