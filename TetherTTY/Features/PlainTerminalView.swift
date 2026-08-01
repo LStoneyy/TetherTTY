@@ -108,7 +108,8 @@ struct PlainTerminalView: View {
                 Button {
                     let reconnectRequest = viewModel.makeReconnectRequest()
                     Task { await viewModel.disconnect() }
-                    dismiss()
+                    // Don't dismiss here: the flow coordinator swaps this terminal out for the
+                    // session picker in place, so self-dismissing would tear down the whole cover.
                     onReconnect?(reconnectRequest)
                 } label: {
                     Label("Reconnect", systemImage: "arrow.clockwise")

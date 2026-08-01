@@ -167,7 +167,15 @@ final class HostListViewModel: ObservableObject {
     func cancelHostKeyTrust() {
         hostKeyChallenge = nil
     }
+
+    /// Builds a coordinator for a fresh connect journey, wiring it to this view model's
+    /// (already-audited) host-key evaluation and trust logic.
+    func makeConnectionFlow(for connection: Connection) -> ConnectionFlowCoordinator {
+        ConnectionFlowCoordinator(connection: connection, host: self)
+    }
 }
+
+extension HostListViewModel: ConnectionFlowHost {}
 
 struct ConnectionDraft: Equatable {
     var id: UUID

@@ -41,6 +41,8 @@
 		A20000000000000000000028 /* SSHTerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000029 /* SSHTerminalView.swift */; };
 		A20000000000000000000031 /* ConnectionPhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000032 /* ConnectionPhase.swift */; };
 		A20000000000000000000032 /* ConnectionProgressOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000033 /* ConnectionProgressOverlay.swift */; };
+		A20000000000000000000033 /* ConnectionFlowCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000034 /* ConnectionFlowCoordinator.swift */; };
+		A20000000000000000000034 /* ConnectionFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000035 /* ConnectionFlowView.swift */; };
 		A20000000000000000000029 /* TerminalStartupAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000030 /* TerminalStartupAction.swift */; };
 		A20000000000000000000030 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000031 /* PrivacyInfo.xcprivacy */; };
 		B20000000000000000000001 /* AbyssalThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* AbyssalThemeTests.swift */; };
@@ -56,6 +58,7 @@
 		B20000000000000000000011 /* ResourceLoggingSecurityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000012 /* ResourceLoggingSecurityTests.swift */; };
 		B20000000000000000000012 /* InputValidationSecurityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000013 /* InputValidationSecurityTests.swift */; };
 		B20000000000000000000013 /* RealHostKeyResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000014 /* RealHostKeyResolverTests.swift */; };
+		B20000000000000000000014 /* ConnectionFlowCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000015 /* ConnectionFlowCoordinatorTests.swift */; };
 		P30000000000000000000001 /* NIOSSH in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000001 /* NIOSSH */; };
 		P30000000000000000000002 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000002 /* NIOCore */; };
 		P30000000000000000000003 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000003 /* NIOPosix */; };
@@ -106,6 +109,8 @@
 		A10000000000000000000029 /* SSHTerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHTerminalView.swift; sourceTree = "<group>"; };
 		A10000000000000000000032 /* ConnectionPhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionPhase.swift; sourceTree = "<group>"; };
 		A10000000000000000000033 /* ConnectionProgressOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionProgressOverlay.swift; sourceTree = "<group>"; };
+		A10000000000000000000034 /* ConnectionFlowCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionFlowCoordinator.swift; sourceTree = "<group>"; };
+		A10000000000000000000035 /* ConnectionFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionFlowView.swift; sourceTree = "<group>"; };
 		A10000000000000000000030 /* TerminalStartupAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalStartupAction.swift; sourceTree = "<group>"; };
 		A10000000000000000000031 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		B10000000000000000000001 /* AbyssalThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbyssalThemeTests.swift; sourceTree = "<group>"; };
@@ -122,6 +127,7 @@
 		B10000000000000000000012 /* ResourceLoggingSecurityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResourceLoggingSecurityTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000013 /* InputValidationSecurityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputValidationSecurityTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000014 /* RealHostKeyResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealHostKeyResolverTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000015 /* ConnectionFlowCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionFlowCoordinatorTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -203,6 +209,7 @@
 				A10000000000000000000026 /* SessionPickerView.swift */,
 				A10000000000000000000029 /* SSHTerminalView.swift */,
 				A10000000000000000000033 /* ConnectionProgressOverlay.swift */,
+				A10000000000000000000035 /* ConnectionFlowView.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -223,6 +230,7 @@
 				A10000000000000000000011 /* HostListViewModel.swift */,
 				A10000000000000000000017 /* PlainTerminalViewModel.swift */,
 				A10000000000000000000025 /* SessionPickerViewModel.swift */,
+				A10000000000000000000034 /* ConnectionFlowCoordinator.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -279,6 +287,7 @@
 				B10000000000000000000012 /* ResourceLoggingSecurityTests.swift */,
 				B10000000000000000000013 /* InputValidationSecurityTests.swift */,
 				B10000000000000000000014 /* RealHostKeyResolverTests.swift */,
+				B10000000000000000000015 /* ConnectionFlowCoordinatorTests.swift */,
 			);
 			path = TetherTTYTests;
 			sourceTree = "<group>";
@@ -448,6 +457,8 @@
 				A20000000000000000000028 /* SSHTerminalView.swift in Sources */,
 				A20000000000000000000031 /* ConnectionPhase.swift in Sources */,
 				A20000000000000000000032 /* ConnectionProgressOverlay.swift in Sources */,
+				A20000000000000000000033 /* ConnectionFlowCoordinator.swift in Sources */,
+				A20000000000000000000034 /* ConnectionFlowView.swift in Sources */,
 				A20000000000000000000029 /* TerminalStartupAction.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -469,6 +480,7 @@
 				B20000000000000000000011 /* ResourceLoggingSecurityTests.swift in Sources */,
 				B20000000000000000000012 /* InputValidationSecurityTests.swift in Sources */,
 				B20000000000000000000013 /* RealHostKeyResolverTests.swift in Sources */,
+				B20000000000000000000014 /* ConnectionFlowCoordinatorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
