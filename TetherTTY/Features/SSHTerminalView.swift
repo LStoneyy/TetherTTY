@@ -82,12 +82,13 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate, UIGestureRecogn
     //   UIScrollView pan handles native scrolling exclusively and we never
     //   double-scroll.
     // - Direct touch in the alternate buffer (herdr, vim, less, htop, …) is
-    //   admitted only while the terminal is not reporting mouse input, so the
-    //   arrow-key translation path runs instead of fighting mouse reporting.
-    //   An admitted alternate-buffer touch also wires SwiftTerm's selection
-    //   pan to wait on the indirect pan (see
-    //   `makeSelectionPansWaitForIndirectScroll`) so an active selection
-    //   cannot beat the swipe before arrow-key translation runs.
+    //   admitted so the swipe always reaches our translation path: arrow keys
+    //   while the terminal is not reporting mouse input, SGR/X10 wheel events
+    //   while it is. An admitted alternate-buffer touch also wires SwiftTerm's
+    //   competing pans to wait on the indirect pan — the mouse-drag pan when
+    //   mouse reporting is active, the selection pan when it is not — so
+    //   neither can win the touch before translation runs (see
+    //   `makeExtraPansWaitForIndirectScroll`).
     // - Every other recognizer is left unaffected (mirrors UIView's default
     //   acceptance).
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
@@ -95,45 +96,64 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate, UIGestureRecogn
             return true
         }
         let terminal = getTerminal()
-        let admit = Self.shouldAdmitDirectTouch(
-            isAlternateBuffer: terminal.isCurrentBufferAlternate,
-            mouseReportingActive: terminal.mouseMode != .off
-        )
-        guard admit else { return false }
-        // Direct touch is being admitted (alternate buffer, mouse reporting
-        // off): make SwiftTerm's selection pan wait on the real scroll
-        // recognizer. No-op unless a selection pan is installed and a
-        // selection is active.
-        Self.makeSelectionPansWaitForIndirectScroll(in: self)
+        let mouseActive = terminal.mouseMode != .off
+        guard Self.shouldAdmitDirectTouch(isAlternateBuffer: terminal.isCurrentBufferAlternate) else { return false }
+        // Direct touch is being admitted (alternate buffer): make SwiftTerm's
+        // competing pan wait on the real scroll recognizer.
+        Self.makeExtraPansWaitForIndirectScroll(in: self, requireMouseActive: mouseActive)
         return true
     }
 
     /// Pure admission policy for direct touches on the indirect-scroll
     /// recognizer. Indirect scroll events bypass this check entirely (no
     /// `UITouch` is delivered), so they are always admitted by the custom pan.
-    static func shouldAdmitDirectTouch(isAlternateBuffer: Bool, mouseReportingActive: Bool) -> Bool {
-        isAlternateBuffer && !mouseReportingActive
+    /// Any alternate-buffer touch is admitted regardless of mouse mode; the
+    /// normal buffer always rejects direct touch so the native pan scrolls
+    /// exclusively.
+    static func shouldAdmitDirectTouch(isAlternateBuffer: Bool) -> Bool {
+        isAlternateBuffer
     }
 
-    /// Makes SwiftTerm's dynamically-installed selection pan wait for the
-    /// indirect-scroll recognizer to fail before it recognizes. SwiftTerm's
-    /// selection pan has no delegate and no failure requirement, so in the
-    /// alternate buffer it could otherwise win a direct touch that should
-    /// scroll, leaving the indirect pan stuck in `.possible` and the swipe
-    /// neither scrolling nor translating to arrow keys.
+    /// Whether a pan's `velocity` (points/sec) should be classified as a
+    /// vertical scroll. Ties are admitted (`>=`) to bias toward keeping
+    /// vertical scrolling reliable. An exact `.zero` velocity is rejected:
+    /// `gestureRecognizerShouldBegin` is consulted only as a recognizer
+    /// transitions out of `.possible`, where velocity is normally available,
+    /// but an exact zero at UIKit startup must not let the pan swallow a tap —
+    /// a pan needs movement to be meaningful.
+    static func isVerticalScrollVelocity(_ velocity: CGPoint) -> Bool {
+        guard velocity != .zero else { return false }
+        return abs(velocity.y) >= abs(velocity.x)
+    }
+
+    /// Makes SwiftTerm's dynamically-installed pans wait for the
+    /// indirect-scroll recognizer to fail before they recognize. SwiftTerm's
+    /// pans have no delegate and no failure requirement, so in the alternate
+    /// buffer they could otherwise win a direct touch that should scroll,
+    /// leaving the indirect pan stuck in `.possible` and the swipe neither
+    /// scrolling nor translating to input.
     ///
-    /// Narrowly gated to alternate buffer + mouse reporting off + an active
-    /// selection, so taps, long-press selection, and normal-buffer selection
-    /// drags are untouched. When the gate is closed (or admission is rejected
-    /// in the normal buffer) the selection pan recognizes exactly as it does
-    /// upstream. Uses the public `require(toFail:)` API — the only public
-    /// UIKit mechanism that guarantees one pan wins over a competing pan.
+    /// - `requireMouseActive == true`: mouse reporting owns the touch, so every
+    ///   extra pan (SwiftTerm's mouse-drag pan, and any selection pan) is wired
+    ///   to yield — the swipe must reach the wheel-translation path.
+    /// - `requireMouseActive == false`: the mouse-off path preserves the
+    ///   existing active-selection arbitration — only an active selection pan
+    ///   is wired, and only while the terminal reports no mouse input, so taps
+    ///   and long-press selection are untouched.
+    ///
+    /// Uses the public `require(toFail:)` API — the only public UIKit
+    /// mechanism that guarantees one pan wins over a competing pan.
     ///
     /// Returns the recognizers that were wired, for tests.
     @discardableResult
-    static func makeSelectionPansWaitForIndirectScroll(in view: SSHTerminalView) -> [UIPanGestureRecognizer] {
+    static func makeExtraPansWaitForIndirectScroll(in view: SSHTerminalView, requireMouseActive: Bool) -> [UIPanGestureRecognizer] {
         let terminal = view.getTerminal()
-        guard terminal.isCurrentBufferAlternate, terminal.mouseMode == .off, view.hasActiveSelection else { return [] }
+        guard terminal.isCurrentBufferAlternate else { return [] }
+        if requireMouseActive {
+            guard terminal.mouseMode != .off else { return [] }
+        } else {
+            guard terminal.mouseMode == .off, view.hasActiveSelection else { return [] }
+        }
         let candidates = (view.gestureRecognizers ?? [])
             .compactMap { $0 as? UIPanGestureRecognizer }
             .filter { $0 !== view.panGestureRecognizer && $0 !== view.indirectScrollGesture }
@@ -156,6 +176,18 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate, UIGestureRecogn
             (gestureRecognizer === indirectScrollGesture && otherGestureRecognizer === nativePan) ||
             (gestureRecognizer === nativePan && otherGestureRecognizer === indirectScrollGesture)
         return isNativePair && getTerminal().isCurrentBufferAlternate
+    }
+
+    // Begin gate for the indirect-scroll recognizer: only predominantly
+    // vertical pans may begin, so a horizontal drag fails the custom pan and
+    // SwiftTerm's mouse pan (which waits on it via `require(toFail:)`) can
+    // proceed instead — no silent horizontal dead zone. Every unrelated
+    // recognizer is left unaffected (mirrors UIView's default acceptance).
+    override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        guard gestureRecognizer === indirectScrollGesture else {
+            return super.gestureRecognizerShouldBegin(gestureRecognizer)
+        }
+        return Self.isVerticalScrollVelocity(indirectScrollGesture.velocity(in: self))
     }
 
     /// Target for the inherited UIScrollView pan — the normal-buffer scroll
@@ -197,10 +229,17 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate, UIGestureRecogn
 
             let terminal = getTerminal()
             if terminal.isCurrentBufferAlternate {
-                // The alternate screen buffer (herdr, vim, less, htop, …) has no local
-                // scrollback, so scrolling it locally does nothing. Translate the scroll
-                // into arrow-key presses for the running full-screen app instead.
-                sendScrollAsArrowKeys(lineDelta: lineDelta, applicationCursor: terminal.applicationCursor)
+                if terminal.mouseMode == .off {
+                    // The alternate screen buffer (herdr, vim, less, htop, …) has no local
+                    // scrollback, so scrolling it locally does nothing. Without mouse
+                    // reporting, translate the scroll into arrow-key presses for the
+                    // running full-screen app instead.
+                    sendScrollAsArrowKeys(lineDelta: lineDelta, applicationCursor: terminal.applicationCursor)
+                } else {
+                    // The app is receiving mouse input, so translate the scroll into
+                    // SGR/X10 wheel events at the touch location instead.
+                    sendScrollAsMouseWheel(lineDelta: lineDelta, location: gesture.location(in: self))
+                }
             } else if lineDelta > 0 {
                 scrollUp(lines: lineDelta)      // content pulled down → reveal older history
             } else {
@@ -217,18 +256,55 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate, UIGestureRecogn
         send(bytes)
     }
 
-    /// Builds the repeated arrow-key byte stream for a scroll of `lineDelta`
-    /// rows (positive = up). Capped to avoid flooding on a fast flick.
-    /// The magnitude is capped by sign before any negation so extreme values
-    /// like `Int.min` cannot overflow.
-    static func arrowKeySequence(lineDelta: Int, applicationCursor: Bool) -> [UInt8] {
-        guard lineDelta != 0 else { return [] }
-        let cappedMagnitude: Int
-        if lineDelta < 0 {
-            cappedMagnitude = lineDelta == Int.min ? 40 : min(-lineDelta, 40)
-        } else {
-            cappedMagnitude = min(lineDelta, 40)
+    /// Translates a scrolled `lineDelta` (positive = up) into SGR/X10 mouse
+    /// wheel events for the running alternate-buffer app. Each event is emitted
+    /// at the view-space `location`, repeated by the capped magnitude.
+    func sendScrollAsMouseWheel(lineDelta: Int, location: CGPoint) {
+        let magnitude = Self.cappedScrollMagnitude(lineDelta)
+        guard magnitude > 0 else { return }
+        let terminal = getTerminal()
+        guard let cell = Self.cellLocation(for: location, in: bounds, cols: terminal.cols, rows: terminal.rows) else {
+            return
         }
+        let buttonFlags = terminal.encodeButton(button: lineDelta > 0 ? 4 : 5, release: false, shift: false, meta: false, control: false)
+        for _ in 0..<magnitude {
+            // SwiftTerm's `sendEvent` adds 1 to the 0-based cell itself.
+            terminal.sendEvent(buttonFlags: buttonFlags, x: cell.x, y: cell.y)
+        }
+    }
+
+    /// Computes the 0-based cell (col, row) for a view-space `point`, clamped to
+    /// the visible grid. Returns nil when the dimensions or bounds are unusable
+    /// (zero or non-finite), so callers can skip emitting.
+    static func cellLocation(for point: CGPoint, in bounds: CGRect, cols: Int, rows: Int) -> (x: Int, y: Int)? {
+        guard cols > 0, rows > 0,
+              bounds.width > 0, bounds.height > 0,
+              bounds.width.isFinite, bounds.height.isFinite,
+              point.x.isFinite, point.y.isFinite else { return nil }
+        let cellWidth = bounds.width / CGFloat(cols)
+        let cellHeight = bounds.height / CGFloat(rows)
+        let col = min(max(Int(point.x / cellWidth), 0), cols - 1)
+        let row = min(max(Int(point.y / cellHeight), 0), rows - 1)
+        return (col, row)
+    }
+
+    /// Caps a scroll delta's magnitude to 40 events, matching the arrow-key
+    /// flood cap. The magnitude is capped by sign before any negation so
+    /// extreme values like `Int.min` cannot overflow; a zero delta yields zero.
+    static func cappedScrollMagnitude(_ lineDelta: Int) -> Int {
+        guard lineDelta != 0 else { return 0 }
+        if lineDelta < 0 {
+            return lineDelta == Int.min ? 40 : min(-lineDelta, 40)
+        }
+        return min(lineDelta, 40)
+    }
+
+    /// Builds the repeated arrow-key byte stream for a scroll of `lineDelta`
+    /// rows (positive = up). The repetition count is capped via
+    /// `cappedScrollMagnitude` to avoid flooding on a fast flick.
+    static func arrowKeySequence(lineDelta: Int, applicationCursor: Bool) -> [UInt8] {
+        let cappedMagnitude = Self.cappedScrollMagnitude(lineDelta)
+        guard cappedMagnitude > 0 else { return [] }
         let sequence: [UInt8] = lineDelta > 0
             ? (applicationCursor ? EscapeSequences.moveUpApp : EscapeSequences.moveUpNormal)
             : (applicationCursor ? EscapeSequences.moveDownApp : EscapeSequences.moveDownNormal)
