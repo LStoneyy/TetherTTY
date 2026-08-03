@@ -39,19 +39,22 @@ final class ConnectionFlowCoordinatorTests: XCTestCase {
         XCTAssertNil(coordinator.activeRequest)
     }
 
-    func testStartWithChangedHostKeyFails() async {
+    func testStartWithChangedHostKeyShowsReplacementPrompt() async {
         let connection = makeConnection()
+        let challenge = HostKeyChallenge(
+            connection: connection,
+            fingerprint: "SHA256:new",
+            previousFingerprint: "SHA256:stored"
+        )
         let host = FakeConnectionFlowHost()
-        host.requestResult = .failed("Host key changed. Expected A, got B. Connection blocked.")
+        host.requestResult = .changed(challenge)
         let coordinator = ConnectionFlowCoordinator(connection: connection, host: host)
 
         coordinator.start()
         await coordinator.awaitSettled()
 
-        guard case .failed(let message) = coordinator.phase else {
-            return XCTFail("Expected .failed, got \(coordinator.phase)")
-        }
-        XCTAssertTrue(message.contains("Host key changed"))
+        XCTAssertEqual(coordinator.phase, .trustPrompt(challenge))
+        XCTAssertNil(coordinator.activeRequest)
     }
 
     func testTrustCurrentHostAdvancesToPickingSession() async {
@@ -153,6 +156,7 @@ final class FakeConnectionFlowHost: ConnectionFlowHost {
     enum RequestResult {
         case trusted(TerminalConnectionRequest)
         case unknown(HostKeyChallenge)
+        case changed(HostKeyChallenge)
         case failed(String)
     }
 
@@ -171,6 +175,10 @@ final class FakeConnectionFlowHost: ConnectionFlowHost {
             connectPhase = nil
             return request
         case .unknown(let challenge):
+            hostKeyChallenge = challenge
+            connectPhase = nil
+            return nil
+        case .changed(let challenge):
             hostKeyChallenge = challenge
             connectPhase = nil
             return nil

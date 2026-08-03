@@ -121,9 +121,13 @@ final class HostListViewModel: ObservableObject {
                 hostKeyChallenge = challenge
                 return nil
             case .changed(let expected, let actual):
-                let message = "Host key changed. Expected \(expected), got \(actual). Connection blocked."
-                errorMessage = message
-                connectPhase = .failed(message)
+                errorMessage = nil
+                connectPhase = nil
+                hostKeyChallenge = HostKeyChallenge(
+                    connection: connection,
+                    fingerprint: actual,
+                    previousFingerprint: expected
+                )
                 return nil
             }
         } catch {

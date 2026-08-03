@@ -130,7 +130,7 @@ final class AppFlowIntegrationTests: XCTestCase {
         XCTAssertNil(reconnectRequest.startupAction)
     }
 
-    func testAppFlowWithHostKeyChangedBlocksConnection() async throws {
+    func testAppFlowWithHostKeyChangedOffersExplicitReplacement() async throws {
         let connection = Connection(alias: "Changed", host: "changed.local", username: "lukas")
         try repository.saveConnection(connection, password: "pass")
 
@@ -149,8 +149,22 @@ final class AppFlowIntegrationTests: XCTestCase {
 
         let request = await hostListVM.terminalRequest(for: connection)
         XCTAssertNil(request)
-        XCTAssertNotNil(hostListVM.errorMessage)
-        XCTAssertTrue(hostListVM.errorMessage?.contains("Host key changed") ?? false)
+        XCTAssertNil(hostListVM.errorMessage)
+        XCTAssertNil(hostListVM.connectPhase)
+        XCTAssertEqual(hostListVM.hostKeyChallenge?.fingerprint, "SHA256:different")
+        XCTAssertEqual(hostListVM.hostKeyChallenge?.previousFingerprint, "SHA256:original")
+
+        guard let challenge = hostListVM.hostKeyChallenge,
+              let trustedRequest = hostListVM.trustHostKey(challenge) else {
+            return XCTFail("Expected replacement trust to create a terminal request")
+        }
+
+        XCTAssertEqual(trustedRequest.connection.id, connection.id)
+        XCTAssertEqual(trustedRequest.password, "pass")
+        XCTAssertEqual(
+            try knownHostStore.knownHost(host: connection.host, port: connection.port)?.fingerprint,
+            "SHA256:different"
+        )
     }
 
     func testAppFlowWithNoStoredPasswordShowsError() async throws {
@@ -214,7 +228,7 @@ final class AppFlowIntegrationTests: XCTestCase {
         XCTAssertNotNil(hostListVM.hostKeyChallenge)
     }
 
-    func testConnectPhaseFailsOnChangedHostKey() async throws {
+    func testConnectPhaseClearsForChangedHostKeyReplacementPrompt() async throws {
         let connection = Connection(alias: "Changed", host: "changed.local", port: 22, username: "lukas")
         try repository.saveConnection(connection, password: "secret")
 
@@ -231,10 +245,18 @@ final class AppFlowIntegrationTests: XCTestCase {
 
         let request = await hostListVM.terminalRequest(for: connection)
         XCTAssertNil(request)
-        guard case .failed(let message)? = hostListVM.connectPhase else {
-            return XCTFail("Expected .failed phase, got \(String(describing: hostListVM.connectPhase))")
-        }
-        XCTAssertTrue(message.contains("Host key changed"))
+        XCTAssertNil(hostListVM.connectPhase, "Overlay should clear so the replacement prompt takes over")
+        XCTAssertEqual(hostListVM.hostKeyChallenge?.fingerprint, "SHA256:different")
+        XCTAssertEqual(hostListVM.hostKeyChallenge?.previousFingerprint, "SHA256:original")
+
+        hostListVM.cancelHostKeyTrust()
+
+        XCTAssertNil(hostListVM.hostKeyChallenge)
+        XCTAssertEqual(
+            try knownHostStore.knownHost(host: connection.host, port: connection.port)?.fingerprint,
+            "SHA256:original",
+            "Cancelling replacement must leave the stored host key unchanged"
+        )
     }
 
     func testConnectPhaseFailsWhenNoPassword() async throws {

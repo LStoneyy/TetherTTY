@@ -71,9 +71,7 @@ struct ConnectionFlowView: View {
                 title: ConnectionPhase.failed(message).title,
                 subtitle: message,
                 isError: true,
-                // A changed host key is a hard stop — offer only Back, never a retry that would
-                // just re-block.
-                onRetry: message.contains("Host key changed") ? nil : { coordinator.retry() },
+                onRetry: { coordinator.retry() },
                 onBack: { dismissFlow() }
             )
             .transition(.opacity)
@@ -87,6 +85,8 @@ private struct TrustPromptView: View {
     let challenge: HostKeyChallenge
     let onTrust: () -> Void
     let onCancel: () -> Void
+
+    private var isReplacement: Bool { challenge.previousFingerprint != nil }
 
     var body: some View {
         ZStack {
@@ -107,20 +107,43 @@ private struct TrustPromptView: View {
                 .shadow(color: AbyssalTheme.emberWarning.opacity(0.3), radius: 24)
 
                 VStack(spacing: 8) {
-                    Text("New host")
+                    Text(isReplacement ? "Host key changed" : "New host")
                         .font(.system(size: 26, weight: .semibold, design: .rounded))
                         .foregroundStyle(AbyssalTheme.bone)
 
-                    Text("Review the fingerprint before trusting")
+                    Text(
+                        isReplacement
+                            ? "This can indicate a security risk. Verify the new fingerprint independently before replacing the stored key."
+                            : "Review the fingerprint before trusting"
+                    )
                         .font(.system(.subheadline, design: .rounded))
-                        .foregroundStyle(AbyssalTheme.bone.opacity(0.66))
+                        .foregroundStyle(
+                            isReplacement ? AbyssalTheme.emberWarning : AbyssalTheme.bone.opacity(0.66)
+                        )
                         .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text(challenge.connection.displayAddress)
                         .font(.system(.subheadline, design: .monospaced))
                         .foregroundStyle(AbyssalTheme.pearlAqua)
+
+                    if let previousFingerprint = challenge.previousFingerprint {
+                        Text("Stored fingerprint")
+                            .font(.system(.caption, design: .rounded).weight(.semibold))
+                            .foregroundStyle(AbyssalTheme.bone.opacity(0.58))
+
+                        Text(previousFingerprint)
+                            .font(.system(.footnote, design: .monospaced))
+                            .foregroundStyle(AbyssalTheme.bone.opacity(0.7))
+                            .textSelection(.enabled)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Text("New fingerprint")
+                            .font(.system(.caption, design: .rounded).weight(.semibold))
+                            .foregroundStyle(AbyssalTheme.emberWarning)
+                    }
 
                     Text(challenge.fingerprint)
                         .font(.system(.footnote, design: .monospaced))
@@ -134,12 +157,19 @@ private struct TrustPromptView: View {
 
                 HStack(spacing: 12) {
                     Button(action: onTrust) {
-                        Label("Trust", systemImage: "checkmark.shield")
+                        Label(
+                            isReplacement ? "Replace Host Key" : "Trust",
+                            systemImage: isReplacement ? "arrow.triangle.2.circlepath" : "checkmark.shield"
+                        )
                             .font(.system(.headline, design: .rounded))
                             .foregroundStyle(AbyssalTheme.abyss)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
-                            .background(Capsule().fill(AbyssalTheme.mintLeaf))
+                            .background(
+                                Capsule().fill(
+                                    isReplacement ? AbyssalTheme.emberWarning : AbyssalTheme.mintLeaf
+                                )
+                            )
                     }
                     .buttonStyle(.plain)
 

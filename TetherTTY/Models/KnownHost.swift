@@ -17,6 +17,13 @@ struct HostKeyChallenge: Identifiable, Equatable {
     let id = UUID()
     let connection: Connection
     let fingerprint: String
+    let previousFingerprint: String?
+
+    init(connection: Connection, fingerprint: String, previousFingerprint: String? = nil) {
+        self.connection = connection
+        self.fingerprint = fingerprint
+        self.previousFingerprint = previousFingerprint
+    }
 }
 
 enum HostKeyTrustDecision: Equatable {
