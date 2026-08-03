@@ -160,6 +160,88 @@ final class SSHTerminalViewScrollTests: XCTestCase {
         XCTAssertFalse(view.gestureRecognizer(unrelated, shouldRecognizeSimultaneouslyWith: view.panGestureRecognizer))
     }
 
+    // MARK: - Selection clearing on scroll start
+
+    func testScrollStartClearsActiveSelection() {
+        let view = SSHTerminalView(frame: .zero)
+        view.feedOutput(Array("line one\nline two\nline three\n".utf8))
+
+        view.setSelectionRange(start: Position(col: 0, row: 0), end: Position(col: 7, row: 0))
+        XCTAssertTrue(view.hasActiveSelection, "precondition: setSelectionRange should activate a real SwiftTerm selection")
+
+        view.clearSelectionForScrollStart()
+        XCTAssertFalse(view.hasActiveSelection, "a real scroll start must clear the active selection so the swipe scrolls instead of extending text selection")
+    }
+
+    func testScrollStartWithNoSelectionIsNoOp() {
+        let view = SSHTerminalView(frame: .zero)
+        XCTAssertFalse(view.hasActiveSelection)
+
+        view.clearSelectionForScrollStart()
+        XCTAssertFalse(view.hasActiveSelection)
+    }
+
+    // MARK: - Selection pan yields to indirect scroll (alternate buffer)
+
+    func testSelectionPanYieldsToIndirectScrollInAlternateBuffer() {
+        let view = SSHTerminalView(frame: .zero)
+        view.feedOutput(Array("\u{1B}[?1049h".utf8))   // activate alternate screen buffer
+        view.selectAll(nil)                            // SwiftTerm installs its selection pan
+
+        XCTAssertTrue(view.hasActiveSelection)
+
+        let wired = SSHTerminalView.makeSelectionPansWaitForIndirectScroll(in: view)
+        XCTAssertEqual(wired.count, 1, "exactly the SwiftTerm selection pan should be wired")
+        XCTAssertTrue(view.gestureRecognizers?.contains(wired[0]) == true)
+        XCTAssertFalse(wired[0] === view.panGestureRecognizer)
+        XCTAssertFalse(wired[0] === view.indirectScrollGesture)
+    }
+
+    func testSelectionPansDoNotYieldInNormalBuffer() {
+        let view = SSHTerminalView(frame: .zero)
+        view.selectAll(nil)
+
+        XCTAssertTrue(view.hasActiveSelection)
+        XCTAssertFalse(view.getTerminal().isCurrentBufferAlternate)
+        XCTAssertEqual(SSHTerminalView.makeSelectionPansWaitForIndirectScroll(in: view), [],
+                       "normal-buffer selection drags must stay fully interactive")
+    }
+
+    func testSelectionPansDoNotYieldWithoutActiveSelection() {
+        let view = SSHTerminalView(frame: .zero)
+        view.feedOutput(Array("\u{1B}[?1049h".utf8))
+
+        XCTAssertTrue(view.getTerminal().isCurrentBufferAlternate)
+        XCTAssertFalse(view.hasActiveSelection)
+        XCTAssertEqual(SSHTerminalView.makeSelectionPansWaitForIndirectScroll(in: view), [])
+    }
+
+    func testSelectionPansDoNotYieldWhenMouseReportingActive() {
+        let view = SSHTerminalView(frame: .zero)
+        view.feedOutput(Array("\u{1B}[?1049h\u{1B}[?1000h".utf8))
+        view.selectAll(nil)
+
+        XCTAssertTrue(view.getTerminal().isCurrentBufferAlternate)
+        XCTAssertNotEqual(view.getTerminal().mouseMode, .off)
+        XCTAssertTrue(view.hasActiveSelection)
+        XCTAssertEqual(SSHTerminalView.makeSelectionPansWaitForIndirectScroll(in: view), [],
+                       "mouse reporting owns alternate-buffer touches, not the selection pan")
+    }
+
+    func testSelectionPanYieldExcludesNativePanAndNonPanRecognizers() {
+        let view = SSHTerminalView(frame: .zero)
+        let unrelated = UITapGestureRecognizer()
+        view.addGestureRecognizer(unrelated)
+        view.feedOutput(Array("\u{1B}[?1049h".utf8))
+        view.selectAll(nil)
+
+        let wired = SSHTerminalView.makeSelectionPansWaitForIndirectScroll(in: view)
+        XCTAssertEqual(wired.count, 1)
+        XCTAssertFalse(wired[0] === view.panGestureRecognizer)
+        XCTAssertFalse(wired[0] === view.indirectScrollGesture)
+        XCTAssertFalse(wired[0] === unrelated)
+    }
+
     private func repeated(_ sequence: [UInt8], _ count: Int) -> [UInt8] {
         var bytes: [UInt8] = []
         bytes.reserveCapacity(sequence.count * count)

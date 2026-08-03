@@ -26,6 +26,15 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate, UIGestureRecogn
         layer.backgroundColor = Self.terminalBg.cgColor
         nativeForegroundColor = Self.terminalFg
         addGestureRecognizer(indirectScrollGesture)
+        // Veto a stale text selection the moment a real scroll begins. On the
+        // iPhone a swipe that starts on selected text otherwise leaves
+        // SwiftTerm's selection-drag machinery extending the selection instead
+        // of scrolling — most visible in alternate-buffer sessions (herdr,
+        // vim, …). The pan that actually scrolls gets the hook: the inherited
+        // native pan in the normal buffer, and the indirect pan in the
+        // alternate buffer. Tap selection remains available; pan gestures in
+        // the alternate buffer deliberately prioritize scrolling.
+        panGestureRecognizer.addTarget(self, action: #selector(handleNativePanBegan(_:)))
     }
 
     override func layoutSubviews() {
@@ -75,6 +84,10 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate, UIGestureRecogn
     // - Direct touch in the alternate buffer (herdr, vim, less, htop, …) is
     //   admitted only while the terminal is not reporting mouse input, so the
     //   arrow-key translation path runs instead of fighting mouse reporting.
+    //   An admitted alternate-buffer touch also wires SwiftTerm's selection
+    //   pan to wait on the indirect pan (see
+    //   `makeSelectionPansWaitForIndirectScroll`) so an active selection
+    //   cannot beat the swipe before arrow-key translation runs.
     // - Every other recognizer is left unaffected (mirrors UIView's default
     //   acceptance).
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
@@ -82,10 +95,17 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate, UIGestureRecogn
             return true
         }
         let terminal = getTerminal()
-        return Self.shouldAdmitDirectTouch(
+        let admit = Self.shouldAdmitDirectTouch(
             isAlternateBuffer: terminal.isCurrentBufferAlternate,
             mouseReportingActive: terminal.mouseMode != .off
         )
+        guard admit else { return false }
+        // Direct touch is being admitted (alternate buffer, mouse reporting
+        // off): make SwiftTerm's selection pan wait on the real scroll
+        // recognizer. No-op unless a selection pan is installed and a
+        // selection is active.
+        Self.makeSelectionPansWaitForIndirectScroll(in: self)
+        return true
     }
 
     /// Pure admission policy for direct touches on the indirect-scroll
@@ -93,6 +113,34 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate, UIGestureRecogn
     /// `UITouch` is delivered), so they are always admitted by the custom pan.
     static func shouldAdmitDirectTouch(isAlternateBuffer: Bool, mouseReportingActive: Bool) -> Bool {
         isAlternateBuffer && !mouseReportingActive
+    }
+
+    /// Makes SwiftTerm's dynamically-installed selection pan wait for the
+    /// indirect-scroll recognizer to fail before it recognizes. SwiftTerm's
+    /// selection pan has no delegate and no failure requirement, so in the
+    /// alternate buffer it could otherwise win a direct touch that should
+    /// scroll, leaving the indirect pan stuck in `.possible` and the swipe
+    /// neither scrolling nor translating to arrow keys.
+    ///
+    /// Narrowly gated to alternate buffer + mouse reporting off + an active
+    /// selection, so taps, long-press selection, and normal-buffer selection
+    /// drags are untouched. When the gate is closed (or admission is rejected
+    /// in the normal buffer) the selection pan recognizes exactly as it does
+    /// upstream. Uses the public `require(toFail:)` API — the only public
+    /// UIKit mechanism that guarantees one pan wins over a competing pan.
+    ///
+    /// Returns the recognizers that were wired, for tests.
+    @discardableResult
+    static func makeSelectionPansWaitForIndirectScroll(in view: SSHTerminalView) -> [UIPanGestureRecognizer] {
+        let terminal = view.getTerminal()
+        guard terminal.isCurrentBufferAlternate, terminal.mouseMode == .off, view.hasActiveSelection else { return [] }
+        let candidates = (view.gestureRecognizers ?? [])
+            .compactMap { $0 as? UIPanGestureRecognizer }
+            .filter { $0 !== view.panGestureRecognizer && $0 !== view.indirectScrollGesture }
+        for candidate in candidates {
+            candidate.require(toFail: view.indirectScrollGesture)
+        }
+        return candidates
     }
 
     // Only the custom pan and SwiftTerm's inherited scroll pan may recognize
@@ -110,10 +158,34 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate, UIGestureRecogn
         return isNativePair && getTerminal().isCurrentBufferAlternate
     }
 
+    /// Target for the inherited UIScrollView pan — the normal-buffer scroll
+    /// path. Gated to `.began` so a swipe that has committed to scrolling
+    /// clears any stale text selection (see `clearSelectionForScrollStart`).
+    /// The alternate-buffer path clears its selection in
+    /// `handleIndirectScroll` instead.
+    @objc private func handleNativePanBegan(_ gesture: UIPanGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        clearSelectionForScrollStart()
+    }
+
+    /// Clears the active text selection if one exists. Internal seam
+    /// exercised directly by `SSHTerminalViewScrollTests` — there is no
+    /// public way to synthesize the physical touch stream UIKit needs to
+    /// drive the real `.began` transition on a recognizer.
+    func clearSelectionForScrollStart() {
+        if hasActiveSelection {
+            clearSelection()
+        }
+    }
+
     @objc private func handleIndirectScroll(_ gesture: UIPanGestureRecognizer) {
         switch gesture.state {
         case .began:
             indirectScrollAccumulator.reset()
+            // A swipe that commits to scrolling must not keep extending a
+            // stale selection, otherwise arrow-key translation fights
+            // SwiftTerm's selection-drag state (see `clearSelectionForScrollStart`).
+            clearSelectionForScrollStart()
         case .changed:
             let rows = max(1, getTerminal().rows)
             let cellHeight = bounds.height / CGFloat(rows)
