@@ -59,6 +59,7 @@
 		B20000000000000000000012 /* InputValidationSecurityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000013 /* InputValidationSecurityTests.swift */; };
 		B20000000000000000000013 /* RealHostKeyResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000014 /* RealHostKeyResolverTests.swift */; };
 		B20000000000000000000014 /* ConnectionFlowCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000015 /* ConnectionFlowCoordinatorTests.swift */; };
+		B20000000000000000000015 /* SSHTerminalViewScrollTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000016 /* SSHTerminalViewScrollTests.swift */; };
 		P30000000000000000000001 /* NIOSSH in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000001 /* NIOSSH */; };
 		P30000000000000000000002 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000002 /* NIOCore */; };
 		P30000000000000000000003 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000003 /* NIOPosix */; };
@@ -128,6 +129,7 @@
 		B10000000000000000000013 /* InputValidationSecurityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputValidationSecurityTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000014 /* RealHostKeyResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealHostKeyResolverTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000015 /* ConnectionFlowCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionFlowCoordinatorTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000016 /* SSHTerminalViewScrollTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHTerminalViewScrollTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -288,6 +290,7 @@
 				B10000000000000000000013 /* InputValidationSecurityTests.swift */,
 				B10000000000000000000014 /* RealHostKeyResolverTests.swift */,
 				B10000000000000000000015 /* ConnectionFlowCoordinatorTests.swift */,
+				B10000000000000000000016 /* SSHTerminalViewScrollTests.swift */,
 			);
 			path = TetherTTYTests;
 			sourceTree = "<group>";
@@ -481,6 +484,7 @@
 				B20000000000000000000012 /* InputValidationSecurityTests.swift in Sources */,
 				B20000000000000000000013 /* RealHostKeyResolverTests.swift in Sources */,
 				B20000000000000000000014 /* ConnectionFlowCoordinatorTests.swift in Sources */,
+				B20000000000000000000015 /* SSHTerminalViewScrollTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

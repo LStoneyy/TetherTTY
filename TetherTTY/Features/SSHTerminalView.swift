@@ -1,20 +1,20 @@
 import SwiftUI
 import SwiftTerm
 
-final class SSHTerminalView: TerminalView, TerminalViewDelegate {
+final class SSHTerminalView: TerminalView, TerminalViewDelegate, UIGestureRecognizerDelegate {
     var onSizeChanged: ((Int, Int) -> Void)?
     var onSend: (([UInt8]) -> Void)?
 
     private var scrollReconcilePending = false
-    private var indirectScrollAccumulator: CGFloat = 0
+    private var indirectScrollAccumulator = ScrollTranslationAccumulator()
 
     private static let terminalBg = UIColor(red: 0.04, green: 0.04, blue: 0.08, alpha: 1.0)
     private static let terminalFg = UIColor(red: 0.95, green: 0.95, blue: 0.90, alpha: 1.0)
 
-    private lazy var indirectScrollGesture: UIPanGestureRecognizer = {
+    lazy var indirectScrollGesture: UIPanGestureRecognizer = {
         let gesture = UIPanGestureRecognizer(target: self, action: #selector(handleIndirectScroll(_:)))
         gesture.allowedScrollTypesMask = .all
-        gesture.maximumNumberOfTouches = 0
+        gesture.delegate = self
         return gesture
     }()
 
@@ -63,19 +63,65 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate {
         setNeedsDisplay(bounds)
     }
 
+    // Buffer-aware gesture admission for the indirect-scroll recognizer.
+    //
+    // UIKit calls `shouldReceive` for every *direct* touch targeting a
+    // recognizer; indirect scroll input (trackpad/wheel) carries no `UITouch`,
+    // so it never reaches this hook and remains admitted by the custom pan.
+    //
+    // - Direct touch in the normal buffer is rejected so SwiftTerm's inherited
+    //   UIScrollView pan handles native scrolling exclusively and we never
+    //   double-scroll.
+    // - Direct touch in the alternate buffer (herdr, vim, less, htop, …) is
+    //   admitted only while the terminal is not reporting mouse input, so the
+    //   arrow-key translation path runs instead of fighting mouse reporting.
+    // - Every other recognizer is left unaffected (mirrors UIView's default
+    //   acceptance).
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        guard gestureRecognizer === indirectScrollGesture else {
+            return true
+        }
+        let terminal = getTerminal()
+        return Self.shouldAdmitDirectTouch(
+            isAlternateBuffer: terminal.isCurrentBufferAlternate,
+            mouseReportingActive: terminal.mouseMode != .off
+        )
+    }
+
+    /// Pure admission policy for direct touches on the indirect-scroll
+    /// recognizer. Indirect scroll events bypass this check entirely (no
+    /// `UITouch` is delivered), so they are always admitted by the custom pan.
+    static func shouldAdmitDirectTouch(isAlternateBuffer: Bool, mouseReportingActive: Bool) -> Bool {
+        isAlternateBuffer && !mouseReportingActive
+    }
+
+    // Only the custom pan and SwiftTerm's inherited scroll pan may recognize
+    // simultaneously, in either argument order, and only in the alternate
+    // buffer. That lets an alternate-buffer direct touch drive the arrow-key
+    // translation path while the native pan still tracks it. In the normal
+    // buffer it stays false so an indirect trackpad/wheel cannot drive both
+    // the native scroll and the custom path at once; every other pairing also
+    // stays false (mirroring UIView's default).
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        let nativePan = panGestureRecognizer
+        let isNativePair =
+            (gestureRecognizer === indirectScrollGesture && otherGestureRecognizer === nativePan) ||
+            (gestureRecognizer === nativePan && otherGestureRecognizer === indirectScrollGesture)
+        return isNativePair && getTerminal().isCurrentBufferAlternate
+    }
+
     @objc private func handleIndirectScroll(_ gesture: UIPanGestureRecognizer) {
         switch gesture.state {
         case .began:
-            indirectScrollAccumulator = 0
+            indirectScrollAccumulator.reset()
         case .changed:
             let rows = max(1, getTerminal().rows)
             let cellHeight = bounds.height / CGFloat(rows)
             guard cellHeight > 0 else { return }
-            indirectScrollAccumulator += gesture.translation(in: self).y
+            let translation = gesture.translation(in: self).y
             gesture.setTranslation(.zero, in: self)
-            let lineDelta = Int(indirectScrollAccumulator / cellHeight)
+            let lineDelta = indirectScrollAccumulator.consume(translation: translation, cellHeight: cellHeight)
             guard lineDelta != 0 else { return }
-            indirectScrollAccumulator -= CGFloat(lineDelta) * cellHeight
 
             let terminal = getTerminal()
             if terminal.isCurrentBufferAlternate {
@@ -89,22 +135,37 @@ final class SSHTerminalView: TerminalView, TerminalViewDelegate {
                 scrollDown(lines: -lineDelta)   // content pushed up → newer
             }
         default:
-            indirectScrollAccumulator = 0
+            indirectScrollAccumulator.reset()
         }
     }
 
     private func sendScrollAsArrowKeys(lineDelta: Int, applicationCursor: Bool) {
-        let count = min(abs(lineDelta), 40)   // cap to avoid flooding on a fast flick
-        guard count > 0 else { return }
+        let bytes = Self.arrowKeySequence(lineDelta: lineDelta, applicationCursor: applicationCursor)
+        guard !bytes.isEmpty else { return }
+        send(bytes)
+    }
+
+    /// Builds the repeated arrow-key byte stream for a scroll of `lineDelta`
+    /// rows (positive = up). Capped to avoid flooding on a fast flick.
+    /// The magnitude is capped by sign before any negation so extreme values
+    /// like `Int.min` cannot overflow.
+    static func arrowKeySequence(lineDelta: Int, applicationCursor: Bool) -> [UInt8] {
+        guard lineDelta != 0 else { return [] }
+        let cappedMagnitude: Int
+        if lineDelta < 0 {
+            cappedMagnitude = lineDelta == Int.min ? 40 : min(-lineDelta, 40)
+        } else {
+            cappedMagnitude = min(lineDelta, 40)
+        }
         let sequence: [UInt8] = lineDelta > 0
             ? (applicationCursor ? EscapeSequences.moveUpApp : EscapeSequences.moveUpNormal)
             : (applicationCursor ? EscapeSequences.moveDownApp : EscapeSequences.moveDownNormal)
         var bytes: [UInt8] = []
-        bytes.reserveCapacity(sequence.count * count)
-        for _ in 0..<count {
+        bytes.reserveCapacity(sequence.count * cappedMagnitude)
+        for _ in 0..<cappedMagnitude {
             bytes.append(contentsOf: sequence)
         }
-        send(bytes)
+        return bytes
     }
 
     func sizeChanged(source: TerminalView, newCols: Int, newRows: Int) {
@@ -158,5 +219,28 @@ struct TerminalViewRepresentable: UIViewRepresentable {
 
     func sizeThatFits(_ proposal: ProposedViewSize, uiView: SSHTerminalView, context: Context) -> CGSize? {
         nil
+    }
+}
+
+/// Accumulates a scroll gesture's sub-cell translation into whole-row deltas,
+/// carrying the fractional remainder across events.
+struct ScrollTranslationAccumulator {
+    private(set) var remainder: CGFloat = 0
+
+    /// Adds `translation` (in points) and returns how many whole `cellHeight`
+    /// rows were crossed, keeping the leftover fraction for the next event.
+    /// Callers must guarantee a positive, finite `cellHeight` and a finite
+    /// `translation` (the live caller guards `cellHeight` and reads
+    /// `translation` straight from the gesture recognizer).
+    mutating func consume(translation: CGFloat, cellHeight: CGFloat) -> Int {
+        precondition(cellHeight > 0 && cellHeight.isFinite && translation.isFinite)
+        let accumulated = remainder + translation
+        let lineDelta = Int(accumulated / cellHeight)
+        remainder = accumulated - CGFloat(lineDelta) * cellHeight
+        return lineDelta
+    }
+
+    mutating func reset() {
+        remainder = 0
     }
 }
