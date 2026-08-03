@@ -45,6 +45,7 @@
 		A20000000000000000000034 /* ConnectionFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000035 /* ConnectionFlowView.swift */; };
 		A20000000000000000000029 /* TerminalStartupAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000030 /* TerminalStartupAction.swift */; };
 		A20000000000000000000030 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000031 /* PrivacyInfo.xcprivacy */; };
+		A20000000000000000000035 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000036 /* Assets.xcassets */; };
 		B20000000000000000000001 /* AbyssalThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* AbyssalThemeTests.swift */; };
 		B20000000000000000000002 /* ConnectionRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* ConnectionRepositoryTests.swift */; };
 		B20000000000000000000003 /* AppLockViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* AppLockViewModelTests.swift */; };
@@ -114,6 +115,7 @@
 		A10000000000000000000035 /* ConnectionFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionFlowView.swift; sourceTree = "<group>"; };
 		A10000000000000000000030 /* TerminalStartupAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalStartupAction.swift; sourceTree = "<group>"; };
 		A10000000000000000000031 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A10000000000000000000036 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B10000000000000000000001 /* AbyssalThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbyssalThemeTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000002 /* TetherTTYTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TetherTTYTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B10000000000000000000003 /* ConnectionRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionRepositoryTests.swift; sourceTree = "<group>"; };
@@ -164,6 +166,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000001 /* TetherTTYApp.swift */,
+				A10000000000000000000036 /* Assets.xcassets */,
 				A10000000000000000000031 /* PrivacyInfo.xcprivacy */,
 				A30000000000000000000002 /* Models */,
 				A30000000000000000000007 /* Security */,
@@ -412,6 +415,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A20000000000000000000035 /* Assets.xcassets in Resources */,
 				A20000000000000000000030 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
