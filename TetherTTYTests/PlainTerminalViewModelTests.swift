@@ -227,12 +227,172 @@ final class PlainTerminalViewModelTests: XCTestCase {
         XCTAssertEqual(client.openShellCallCount, 3)   // 1 initial + 2 reattach attempts
     }
 
+    func testConnectWithPreferenceOnHoldsIdleTimer() async {
+        let (keepAwake, idleTimer, suiteName) = makeKeepAwake(enabled: true)
+        defer { UserDefaults(suiteName: suiteName)!.removePersistentDomain(forName: suiteName) }
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(),
+            sshClient: StubSSHClient(session: StubSSHSession()),
+            keepAwake: keepAwake
+        )
+
+        await viewModel.connect()
+
+        XCTAssertEqual(idleTimer.writes.last, true)
+    }
+
+    func testConnectWithPreferenceOffNeverTouchesIdleTimer() async {
+        let (keepAwake, idleTimer, suiteName) = makeKeepAwake(enabled: false)
+        defer { UserDefaults(suiteName: suiteName)!.removePersistentDomain(forName: suiteName) }
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(),
+            sshClient: StubSSHClient(session: StubSSHSession()),
+            keepAwake: keepAwake
+        )
+
+        await viewModel.connect()
+
+        XCTAssertTrue(idleTimer.writes.isEmpty)
+    }
+
+    func testDisconnectReleasesIdleTimer() async {
+        let (keepAwake, idleTimer, suiteName) = makeKeepAwake(enabled: true)
+        defer { UserDefaults(suiteName: suiteName)!.removePersistentDomain(forName: suiteName) }
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(),
+            sshClient: StubSSHClient(session: StubSSHSession()),
+            keepAwake: keepAwake
+        )
+        await viewModel.connect()
+
+        await viewModel.disconnect()
+
+        XCTAssertEqual(idleTimer.writes.last, false)
+    }
+
+    func testBackgroundThenForegroundReattachTogglesIdleTimer() async {
+        let (keepAwake, idleTimer, suiteName) = makeKeepAwake(enabled: true)
+        defer { UserDefaults(suiteName: suiteName)!.removePersistentDomain(forName: suiteName) }
+        let session = StubSSHSession()
+        let client = CountingSSHClient(session: session)
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(startupAction: .tmuxAttach(sessionName: "work")),
+            sshClient: client,
+            reconnectGrace: 0,
+            keepAwake: keepAwake
+        )
+
+        await viewModel.connect()
+        XCTAssertEqual(viewModel.state, .terminalOpen)
+        XCTAssertEqual(idleTimer.writes.last, true)
+
+        viewModel.applicationDidEnterBackground()
+        XCTAssertEqual(idleTimer.writes.last, false)
+
+        await viewModel.applicationWillEnterForeground()
+
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(client.openShellCallCount, 2)
+        XCTAssertEqual(viewModel.state, .terminalOpen)
+        XCTAssertEqual(idleTimer.writes.last, true)
+    }
+
+    func testFailedConnectWithPreferenceOnNeverHoldsIdleTimer() async {
+        let (keepAwake, idleTimer, suiteName) = makeKeepAwake(enabled: true)
+        defer { UserDefaults(suiteName: suiteName)!.removePersistentDomain(forName: suiteName) }
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(),
+            sshClient: FailingSSHClient(),
+            keepAwake: keepAwake
+        )
+
+        await viewModel.connect()
+
+        XCTAssertFalse(idleTimer.writes.contains(true))
+    }
+
+    func testToggleKeepAwakeInOpenTerminalWritesTrue() async {
+        let (keepAwake, idleTimer, suiteName) = makeKeepAwake(enabled: false)
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(),
+            sshClient: StubSSHClient(session: StubSSHSession()),
+            keepAwake: keepAwake
+        )
+        await viewModel.connect()
+
+        viewModel.toggleKeepAwake()
+
+        XCTAssertEqual(idleTimer.writes.last, true)
+        XCTAssertTrue(viewModel.isKeepAwakeEnabled)
+        XCTAssertTrue(defaults.bool(forKey: KeepAwakeController.defaultStorageKey))
+    }
+
+    func testSuspendKeepAwakeReleasesIdleTimer() async {
+        let (keepAwake, idleTimer, suiteName) = makeKeepAwake(enabled: true)
+        defer { UserDefaults(suiteName: suiteName)!.removePersistentDomain(forName: suiteName) }
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(),
+            sshClient: StubSSHClient(session: StubSSHSession()),
+            keepAwake: keepAwake
+        )
+        await viewModel.connect()
+        XCTAssertEqual(idleTimer.writes.last, true)
+
+        // The view disappeared without an explicit disconnect(): the terminal is still
+        // .terminalOpen, so only the scene-inactive half of the hold can release the flag.
+        viewModel.suspendKeepAwake()
+
+        XCTAssertEqual(idleTimer.writes.last, false)
+        XCTAssertEqual(viewModel.state, .terminalOpen)
+        XCTAssertTrue(viewModel.isKeepAwakeEnabled)   // the preference itself survives
+    }
+
+    func testExhaustedReattachReleasesIdleTimer() async {
+        let (keepAwake, idleTimer, suiteName) = makeKeepAwake(enabled: true)
+        defer { UserDefaults(suiteName: suiteName)!.removePersistentDomain(forName: suiteName) }
+        let client = FlakySSHClient(session: StubSSHSession())
+        let viewModel = PlainTerminalViewModel(
+            request: terminalRequest(),
+            sshClient: client,
+            reconnectGrace: 0,
+            maxReattachAttempts: 2,
+            reattemptBackoff: 0,
+            keepAwake: keepAwake
+        )
+
+        await viewModel.connect()
+        XCTAssertEqual(idleTimer.writes.last, true)
+
+        // Fail more times than maxReattachAttempts, so reattach() gives up on .disconnected.
+        client.failuresRemaining = 5
+        viewModel.applicationDidEnterBackground()
+        await viewModel.applicationWillEnterForeground()
+
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(viewModel.state, .disconnected)
+        XCTAssertEqual(idleTimer.writes.last, false)   // no battery drain on a dead terminal
+    }
+
     private func terminalRequest(startupAction: TerminalStartupAction? = nil) -> TerminalConnectionRequest {
         TerminalConnectionRequest(
             connection: Connection(alias: "Laptop", host: "192.0.2.42", username: "lukas"),
             password: "secret",
             startupAction: startupAction
         )
+    }
+
+    /// Builds a `KeepAwakeController` on an isolated `UserDefaults` suite plus its
+    /// `FakeIdleTimer`, so the caller can assert on device-flag writes without touching
+    /// shared defaults or `UIApplication.shared`.
+    private func makeKeepAwake(enabled: Bool) -> (controller: KeepAwakeController, idleTimer: FakeIdleTimer, suiteName: String) {
+        let suiteName = "PlainTerminalViewModelTests-keep-awake-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        let idleTimer = FakeIdleTimer()
+        let controller = KeepAwakeController(defaults: defaults, idleTimer: idleTimer)
+        controller.setEnabled(enabled)
+        return (controller, idleTimer, suiteName)
     }
 }
 

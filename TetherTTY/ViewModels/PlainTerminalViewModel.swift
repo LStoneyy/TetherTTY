@@ -3,8 +3,11 @@ import SwiftTerm
 
 @MainActor
 final class PlainTerminalViewModel: ObservableObject {
-    @Published private(set) var state: TerminalConnectionState = .idle
+    @Published private(set) var state: TerminalConnectionState = .idle {
+        didSet { syncKeepAwakeHold() }
+    }
     @Published private(set) var session: SSHSession?
+    @Published private(set) var isKeepAwakeEnabled: Bool
 
     private let request: TerminalConnectionRequest
     private let sshClient: SSHClient
@@ -13,6 +16,8 @@ final class PlainTerminalViewModel: ObservableObject {
     private let maxReattachAttempts: Int
     private let reattemptBackoff: TimeInterval
     private var backgroundedAt: Date?
+    private let keepAwake: KeepAwakeController
+    private var isSceneActive = true
 
     let terminal = SSHTerminalView(frame: .zero)
 
@@ -21,13 +26,20 @@ final class PlainTerminalViewModel: ObservableObject {
         sshClient: SSHClient = SwiftNIOSSHClient(),
         reconnectGrace: TimeInterval = 2,
         maxReattachAttempts: Int = 3,
-        reattemptBackoff: TimeInterval = 1
+        reattemptBackoff: TimeInterval = 1,
+        // Defaults to `nil` (rather than `= KeepAwakeController()`) for the same reason as
+        // `KeepAwakeController.init`'s own `idleTimer` parameter: default argument values are
+        // evaluated outside this initializer's actor context, and `KeepAwakeController.init()`
+        // is `@MainActor`-isolated.
+        keepAwake: KeepAwakeController? = nil
     ) {
         self.request = request
         self.sshClient = sshClient
         self.reconnectGrace = reconnectGrace
         self.maxReattachAttempts = maxReattachAttempts
         self.reattemptBackoff = reattemptBackoff
+        self.keepAwake = keepAwake ?? KeepAwakeController()
+        self.isKeepAwakeEnabled = self.keepAwake.isEnabled
 
         terminal.onSend = { [weak self] bytes in
             self?.sendBytes(bytes)
@@ -84,9 +96,14 @@ final class PlainTerminalViewModel: ObservableObject {
 
     func applicationDidEnterBackground() {
         backgroundedAt = Date()
+        isSceneActive = false
+        syncKeepAwakeHold()
     }
 
     func applicationWillEnterForeground() async {
+        isSceneActive = true
+        syncKeepAwakeHold()
+
         guard let backgroundedAt else { return }
         let elapsed = Date().timeIntervalSince(backgroundedAt)
         self.backgroundedAt = nil
@@ -162,6 +179,29 @@ final class PlainTerminalViewModel: ObservableObject {
         connectedSession = nil
         session = nil
         state = .disconnected
+    }
+
+    func toggleKeepAwake() {
+        isKeepAwakeEnabled = keepAwake.toggle()
+    }
+
+    /// Called when the terminal view disappears without an explicit `disconnect()`
+    /// (e.g. swapped out for the session picker) so the idle timer is released.
+    ///
+    /// This is one-way on purpose: it is only re-armed by a scene becoming active again.
+    /// That is sufficient because `PlainTerminalView` is mounted from a `switch` case in
+    /// `ConnectionFlowView`, so leaving the terminal destroys this view model rather than
+    /// merely hiding it. If the view is ever hosted somewhere that preserves its identity
+    /// across a hide/show cycle (a `NavigationStack` push, a `TabView`), it would need a
+    /// matching re-arm hook on reappearance.
+    func suspendKeepAwake() {
+        isSceneActive = false
+        syncKeepAwakeHold()
+    }
+
+    private func syncKeepAwakeHold() {
+        let live = (state == .terminalOpen || state == .reconnecting)
+        keepAwake.setHolding(isSceneActive && live)
     }
 
     func makeReconnectRequest() -> TerminalConnectionRequest {

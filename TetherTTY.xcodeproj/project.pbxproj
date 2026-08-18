@@ -46,6 +46,7 @@
 		A20000000000000000000029 /* TerminalStartupAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000030 /* TerminalStartupAction.swift */; };
 		A20000000000000000000030 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000031 /* PrivacyInfo.xcprivacy */; };
 		A20000000000000000000035 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000036 /* Assets.xcassets */; };
+		A20000000000000000000037 /* KeepAwakeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000037 /* KeepAwakeController.swift */; };
 		B20000000000000000000001 /* AbyssalThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* AbyssalThemeTests.swift */; };
 		B20000000000000000000002 /* ConnectionRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* ConnectionRepositoryTests.swift */; };
 		B20000000000000000000003 /* AppLockViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* AppLockViewModelTests.swift */; };
@@ -61,6 +62,7 @@
 		B20000000000000000000013 /* RealHostKeyResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000014 /* RealHostKeyResolverTests.swift */; };
 		B20000000000000000000014 /* ConnectionFlowCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000015 /* ConnectionFlowCoordinatorTests.swift */; };
 		B20000000000000000000015 /* SSHTerminalViewScrollTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000016 /* SSHTerminalViewScrollTests.swift */; };
+		B20000000000000000000017 /* KeepAwakeControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000017 /* KeepAwakeControllerTests.swift */; };
 		P30000000000000000000001 /* NIOSSH in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000001 /* NIOSSH */; };
 		P30000000000000000000002 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000002 /* NIOCore */; };
 		P30000000000000000000003 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000003 /* NIOPosix */; };
@@ -116,6 +118,7 @@
 		A10000000000000000000030 /* TerminalStartupAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalStartupAction.swift; sourceTree = "<group>"; };
 		A10000000000000000000031 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		A10000000000000000000036 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A10000000000000000000037 /* KeepAwakeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeepAwakeController.swift; sourceTree = "<group>"; };
 		B10000000000000000000001 /* AbyssalThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbyssalThemeTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000002 /* TetherTTYTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TetherTTYTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B10000000000000000000003 /* ConnectionRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionRepositoryTests.swift; sourceTree = "<group>"; };
@@ -132,6 +135,7 @@
 		B10000000000000000000014 /* RealHostKeyResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealHostKeyResolverTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000015 /* ConnectionFlowCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionFlowCoordinatorTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000016 /* SSHTerminalViewScrollTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHTerminalViewScrollTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000017 /* KeepAwakeControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeepAwakeControllerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -224,6 +228,7 @@
 			children = (
 				A10000000000000000000009 /* CredentialStore.swift */,
 				A10000000000000000000010 /* ConnectionRepository.swift */,
+				A10000000000000000000037 /* KeepAwakeController.swift */,
 			);
 			path = Persistence;
 			sourceTree = "<group>";
@@ -294,6 +299,7 @@
 				B10000000000000000000014 /* RealHostKeyResolverTests.swift */,
 				B10000000000000000000015 /* ConnectionFlowCoordinatorTests.swift */,
 				B10000000000000000000016 /* SSHTerminalViewScrollTests.swift */,
+				B10000000000000000000017 /* KeepAwakeControllerTests.swift */,
 			);
 			path = TetherTTYTests;
 			sourceTree = "<group>";
@@ -467,6 +473,7 @@
 				A20000000000000000000033 /* ConnectionFlowCoordinator.swift in Sources */,
 				A20000000000000000000034 /* ConnectionFlowView.swift in Sources */,
 				A20000000000000000000029 /* TerminalStartupAction.swift in Sources */,
+				A20000000000000000000037 /* KeepAwakeController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -489,6 +496,7 @@
 				B20000000000000000000013 /* RealHostKeyResolverTests.swift in Sources */,
 				B20000000000000000000014 /* ConnectionFlowCoordinatorTests.swift in Sources */,
 				B20000000000000000000015 /* SSHTerminalViewScrollTests.swift in Sources */,
+				B20000000000000000000017 /* KeepAwakeControllerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

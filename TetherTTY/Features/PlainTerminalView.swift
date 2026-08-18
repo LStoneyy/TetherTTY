@@ -19,7 +19,12 @@ struct PlainTerminalView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TerminalStatusBar(state: viewModel.state, showKeyboard: $showKeyboard) {
+            TerminalStatusBar(
+                state: viewModel.state,
+                showKeyboard: $showKeyboard,
+                isKeepAwakeEnabled: viewModel.isKeepAwakeEnabled,
+                toggleKeepAwake: { viewModel.toggleKeepAwake() }
+            ) {
                 Task {
                     await viewModel.disconnect()
                     dismiss()
@@ -68,6 +73,9 @@ struct PlainTerminalView: View {
         }
         .task {
             await viewModel.connect()
+        }
+        .onDisappear {
+            viewModel.suspendKeepAwake()
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
             showKeyboard = false
@@ -141,6 +149,8 @@ struct PlainTerminalView: View {
 private struct TerminalStatusBar: View {
     let state: TerminalConnectionState
     @Binding var showKeyboard: Bool
+    let isKeepAwakeEnabled: Bool
+    let toggleKeepAwake: () -> Void
     let close: () -> Void
 
     var body: some View {
@@ -159,27 +169,36 @@ private struct TerminalStatusBar: View {
                     .font(.system(.caption2, design: .rounded))
                     .foregroundStyle(AbyssalTheme.emberWarning)
                     .lineLimit(1)
+                    .truncationMode(.tail)
             }
 
-            Spacer()
+            Spacer(minLength: 8)
 
-            if state == .terminalOpen {
-                Button {
-                    showKeyboard.toggle()
-                } label: {
-                    Image(systemName: "keyboard")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(showKeyboard ? AbyssalTheme.mintLeaf : AbyssalTheme.pearlAqua)
+            HStack(spacing: 16) {
+                if state == .terminalOpen {
+                    Button(action: toggleKeepAwake) {
+                        Image(systemName: isKeepAwakeEnabled ? "sun.max.fill" : "sun.max")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(isKeepAwakeEnabled ? AbyssalTheme.mintLeaf : AbyssalTheme.pearlAqua)
+                    }
+                    .accessibilityLabel("Keep screen awake")
+                    .accessibilityValue(isKeepAwakeEnabled ? "On" : "Off")
+
+                    Button {
+                        showKeyboard.toggle()
+                    } label: {
+                        Image(systemName: "keyboard")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(showKeyboard ? AbyssalTheme.mintLeaf : AbyssalTheme.pearlAqua)
+                    }
+                    .accessibilityLabel("Keyboard")
                 }
 
                 Button("Close", action: close)
                     .font(.system(.caption, design: .rounded, weight: .semibold))
                     .foregroundStyle(AbyssalTheme.pearlAqua)
-            } else {
-                Button("Close", action: close)
-                    .font(.system(.caption, design: .rounded, weight: .semibold))
-                    .foregroundStyle(AbyssalTheme.pearlAqua)
             }
+            .fixedSize()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
