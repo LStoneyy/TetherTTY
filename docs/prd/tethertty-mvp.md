@@ -79,7 +79,7 @@ The design direction is subtle dark fantasy: abyssal dark surfaces, teal and min
 ## Implementation Decisions
 
 - The MVP is a native SwiftUI iPhone app.
-- iPadOS-specific layouts are deferred, but the architecture should not make them difficult later.
+- iPadOS-specific layouts were deferred for the MVP; the app has since become a universal iPhone + iPad app.
 - Android is deferred until after the iPhone MVP proves the product loop.
 - The app has no backend, no account system, and no cloud sync in the MVP.
 - The start screen is a host list.
@@ -125,7 +125,7 @@ The design direction is subtle dark fantasy: abyssal dark surfaces, teal and min
 ## Out of Scope
 
 - Android support.
-- iPad-specific layouts.
+- iPad-specific layouts (added after the MVP: the app is now universal).
 - iCloud sync.
 - Account system.
 - Hosted backend.

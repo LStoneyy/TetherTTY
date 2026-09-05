@@ -29,8 +29,8 @@ body:
   - type: input
     id: device
     attributes:
-      label: iPhone model
-      placeholder: e.g. iPhone 15 Pro
+      label: Device model
+      placeholder: e.g. iPhone 15 Pro or iPad Pro 11-inch
     validations:
       required: true
   - type: input

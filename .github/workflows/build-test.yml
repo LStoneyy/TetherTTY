@@ -11,8 +11,12 @@ concurrency:
 
 jobs:
   build-test:
-    name: Build & Test (iOS Simulator)
+    name: Build & Test (${{ matrix.device }} Simulator)
     runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [iPhone, iPad]
 
     steps:
       - name: Checkout
@@ -23,17 +27,18 @@ jobs:
           xcodebuild -version
           swift --version
 
-      - name: Select an available iPhone simulator
+      - name: Select an available ${{ matrix.device }} simulator
         id: sim
         run: |
-          # Pick an available iPhone simulator the runner actually has and
-          # target it by UDID. Selecting by name is fragile because device
-          # names legitimately contain parentheses (e.g. "iPhone SE (3rd
-          # generation)") that are easy to truncate; a UDID is unambiguous and
-          # matches whatever runtime the runner image ships.
-          UDID=$(xcrun simctl list devices available --json | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; ids=[x['udid'] for r in d for x in d[r] if x.get('isAvailable') and x['name'].startswith('iPhone')]; print(ids[-1] if ids else '')")
+          # Pick an available simulator of the matrix device type that the
+          # runner actually has and target it by UDID. Selecting by name is
+          # fragile because device names legitimately contain parentheses
+          # (e.g. "iPhone SE (3rd generation)") that are easy to truncate; a
+          # UDID is unambiguous and matches whatever runtime the runner image
+          # ships.
+          UDID=$(xcrun simctl list devices available --json | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; ids=[x['udid'] for r in d for x in d[r] if x.get('isAvailable') and x['name'].startswith('${{ matrix.device }}')]; print(ids[-1] if ids else '')")
           if [ -z "$UDID" ]; then
-            echo "No available iPhone simulator found" >&2
+            echo "No available ${{ matrix.device }} simulator found" >&2
             xcrun simctl list devices available >&2
             exit 1
           fi
@@ -54,6 +59,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: TestResults
+          name: TestResults-${{ matrix.device }}
           path: TestResults.xcresult
           if-no-files-found: ignore

@@ -19,7 +19,7 @@ via GitHub Private Vulnerability Reporting — see [`SECURITY.md`](SECURITY.md).
 ## Building and testing
 
 Open `TetherTTY.xcodeproj` in Xcode and run the tests with **Cmd-U**, or from
-the command line (pick any available iPhone simulator for the destination):
+the command line (pick any available iPhone or iPad simulator for the destination):
 
 ```bash
 xcodebuild test -project TetherTTY.xcodeproj -scheme TetherTTY \
@@ -27,8 +27,8 @@ xcodebuild test -project TetherTTY.xcodeproj -scheme TetherTTY \
 ```
 
 CI runs the same build-and-test on every push and pull request (see
-`.github/workflows/build-test.yml`) and selects an available simulator
-automatically.
+`.github/workflows/build-test.yml`) and runs the suite on both an iPhone and an
+iPad simulator via a matrix strategy.
 
 **All tests must pass before a pull request can be merged.** If you change
 behavior, add or update tests to cover it.
