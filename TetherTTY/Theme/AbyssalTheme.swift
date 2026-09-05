@@ -12,6 +12,7 @@ enum AbyssalTheme {
     static let bloodError = Color(red: 0.62, green: 0.23, blue: 0.29)
 
     static let cornerRadius: CGFloat = 24
+    static let contentMaxWidth: CGFloat = 640
     static let cardStrokeOpacity = 0.28
 }
 

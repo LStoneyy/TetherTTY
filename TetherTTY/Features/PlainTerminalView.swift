@@ -21,7 +21,17 @@ struct PlainTerminalView: View {
         VStack(spacing: 0) {
             TerminalStatusBar(
                 state: viewModel.state,
-                showKeyboard: $showKeyboard,
+                showKeyboard: Binding(
+                    get: { showKeyboard },
+                    set: { visible in
+                        showKeyboard = visible
+                        if visible {
+                            viewModel.terminal.becomeFirstResponder()
+                        } else {
+                            viewModel.terminal.resignFirstResponder()
+                        }
+                    }
+                ),
                 isKeepAwakeEnabled: viewModel.isKeepAwakeEnabled,
                 toggleKeepAwake: { viewModel.toggleKeepAwake() }
             ) {
@@ -54,16 +64,11 @@ struct PlainTerminalView: View {
                 disconnectedFooter
             }
         }
-        .onChange(of: showKeyboard) { _, visible in
-            if visible {
-                viewModel.terminal.becomeFirstResponder()
-            } else {
-                viewModel.terminal.resignFirstResponder()
-            }
-        }
         .onChange(of: scenePhase) { _, newPhase in
             switch newPhase {
             case .background:
+                showKeyboard = false
+                viewModel.terminal.resignFirstResponder()
                 viewModel.applicationDidEnterBackground()
             case .active:
                 Task { await viewModel.applicationWillEnterForeground() }

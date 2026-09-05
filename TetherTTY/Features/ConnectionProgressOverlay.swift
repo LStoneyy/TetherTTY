@@ -51,6 +51,7 @@ struct ConnectionProgressOverlay: View {
                 }
             }
             .padding(28)
+            .frame(maxWidth: AbyssalTheme.contentMaxWidth)
         }
     }
 

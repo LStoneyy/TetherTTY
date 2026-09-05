@@ -79,6 +79,7 @@ private struct LockedVaultView: View {
 
             Spacer()
         }
+        .frame(maxWidth: AbyssalTheme.contentMaxWidth)
     }
 }
 

@@ -37,6 +37,8 @@ struct HostListView: View {
                 }
                 .padding(20)
                 .padding(.top, 8)
+                .frame(maxWidth: AbyssalTheme.contentMaxWidth, alignment: .leading)
+                .frame(maxWidth: .infinity)
             }
             .background(AbyssBackground())
             .toolbar {

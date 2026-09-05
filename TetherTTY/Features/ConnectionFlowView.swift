@@ -185,6 +185,7 @@ private struct TrustPromptView: View {
                 }
             }
             .padding(28)
+            .frame(maxWidth: AbyssalTheme.contentMaxWidth)
         }
     }
 }
