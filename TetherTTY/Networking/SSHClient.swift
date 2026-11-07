@@ -58,6 +58,7 @@ enum SSHClientError: LocalizedError, Equatable {
     }
 }
 
+#if DEBUG
 struct SimulatedSSHClient: SSHClient {
     var executeHandler: ((SSHShellRequest, String) async throws -> SSHExecResult)?
 
@@ -93,6 +94,7 @@ final class SimulatedSSHSession: SSHSession {
     func resize(cols: Int, rows: Int) async {}
     func disconnect() async {}
 }
+#endif
 
 // MARK: - Real SSH Implementation
 

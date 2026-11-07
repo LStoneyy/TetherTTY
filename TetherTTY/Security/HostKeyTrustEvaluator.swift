@@ -8,6 +8,7 @@ protocol HostKeyFingerprintResolver {
     func fingerprint(for connection: Connection) async throws -> String
 }
 
+#if DEBUG
 struct SimulatedHostKeyFingerprintResolver: HostKeyFingerprintResolver {
     func fingerprint(for connection: Connection) async throws -> String {
         let input = "\(connection.host.lowercased()):\(connection.port)"
@@ -15,6 +16,7 @@ struct SimulatedHostKeyFingerprintResolver: HostKeyFingerprintResolver {
         return "SHA256:" + Data(digest).base64EncodedString()
     }
 }
+#endif
 
 struct HostKeyTrustEvaluator {
     let knownHostStore: KnownHostStore

@@ -69,6 +69,19 @@
 		P30000000000000000000004 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000002 /* NIOCore */; };
 		P30000000000000000000005 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000003 /* NIOPosix */; };
 		P30000000000000000000006 /* NIOEmbedded in Frameworks */ = {isa = PBXBuildFile; productRef = P20000000000000000000005 /* NIOEmbedded */; };
+		A20000000000000000000038 /* SessionDiscoveryOutcome.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000038 /* SessionDiscoveryOutcome.swift */; };
+		B20000000000000000000018 /* SessionDiscoveryClassifierTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000018 /* SessionDiscoveryClassifierTests.swift */; };
+		B20000000000000000000019 /* SessionPickerViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000019 /* SessionPickerViewModelTests.swift */; };
+		A20000000000000000000039 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000039 /* AboutView.swift */; };
+		A20000000000000000000047 /* PrivacyShieldWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000047 /* PrivacyShieldWindowController.swift */; };
+		B20000000000000000000020 /* OpenSourceLicensesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000020 /* OpenSourceLicensesTests.swift */; };
+		A20000000000000000000040 /* TetherTTY.txt in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000040 /* TetherTTY.txt */; };
+		A20000000000000000000041 /* swift-nio-ssh.txt in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000041 /* swift-nio-ssh.txt */; };
+		A20000000000000000000042 /* swift-nio.txt in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000042 /* swift-nio.txt */; };
+		A20000000000000000000043 /* swift-crypto.txt in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000043 /* swift-crypto.txt */; };
+		A20000000000000000000044 /* swift-atomics.txt in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000044 /* swift-atomics.txt */; };
+		A20000000000000000000045 /* swift-collections.txt in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000045 /* swift-collections.txt */; };
+		A20000000000000000000046 /* SwiftTerm.txt in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000046 /* SwiftTerm.txt */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -136,6 +149,19 @@
 		B10000000000000000000015 /* ConnectionFlowCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionFlowCoordinatorTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000016 /* SSHTerminalViewScrollTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHTerminalViewScrollTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000017 /* KeepAwakeControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeepAwakeControllerTests.swift; sourceTree = "<group>"; };
+		A10000000000000000000038 /* SessionDiscoveryOutcome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDiscoveryOutcome.swift; sourceTree = "<group>"; };
+		B10000000000000000000018 /* SessionDiscoveryClassifierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDiscoveryClassifierTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000019 /* SessionPickerViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerViewModelTests.swift; sourceTree = "<group>"; };
+		A10000000000000000000039 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		A10000000000000000000047 /* PrivacyShieldWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyShieldWindowController.swift; sourceTree = "<group>"; };
+		B10000000000000000000020 /* OpenSourceLicensesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSourceLicensesTests.swift; sourceTree = "<group>"; };
+		A10000000000000000000040 /* TetherTTY.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "TetherTTY.txt"; sourceTree = "<group>"; };
+		A10000000000000000000041 /* swift-nio-ssh.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "swift-nio-ssh.txt"; sourceTree = "<group>"; };
+		A10000000000000000000042 /* swift-nio.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "swift-nio.txt"; sourceTree = "<group>"; };
+		A10000000000000000000043 /* swift-crypto.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "swift-crypto.txt"; sourceTree = "<group>"; };
+		A10000000000000000000044 /* swift-atomics.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "swift-atomics.txt"; sourceTree = "<group>"; };
+		A10000000000000000000045 /* swift-collections.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "swift-collections.txt"; sourceTree = "<group>"; };
+		A10000000000000000000046 /* SwiftTerm.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "SwiftTerm.txt"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -177,6 +203,7 @@
 				A30000000000000000000008 /* Networking */,
 				A30000000000000000000005 /* Persistence */,
 				A30000000000000000000010 /* Providers */,
+				A30000000000000000000011 /* Licenses */,
 				A30000000000000000000009 /* Terminal */,
 				A30000000000000000000006 /* ViewModels */,
 				A30000000000000000000003 /* Theme */,
@@ -216,6 +243,8 @@
 				A10000000000000000000012 /* ConnectionEditorView.swift */,
 				A10000000000000000000018 /* PlainTerminalView.swift */,
 				A10000000000000000000026 /* SessionPickerView.swift */,
+				A10000000000000000000039 /* AboutView.swift */,
+				A10000000000000000000047 /* PrivacyShieldWindowController.swift */,
 				A10000000000000000000029 /* SSHTerminalView.swift */,
 				A10000000000000000000033 /* ConnectionProgressOverlay.swift */,
 				A10000000000000000000035 /* ConnectionFlowView.swift */,
@@ -277,8 +306,23 @@
 				A10000000000000000000024 /* TmuxSessionProvider.swift */,
 				A10000000000000000000027 /* HerdrSessionParser.swift */,
 				A10000000000000000000028 /* HerdrSessionProvider.swift */,
+				A10000000000000000000038 /* SessionDiscoveryOutcome.swift */,
 			);
 			path = Providers;
+			sourceTree = "<group>";
+		};
+		A30000000000000000000011 /* Licenses */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000040 /* TetherTTY.txt */,
+				A10000000000000000000041 /* swift-nio-ssh.txt */,
+				A10000000000000000000042 /* swift-nio.txt */,
+				A10000000000000000000043 /* swift-crypto.txt */,
+				A10000000000000000000044 /* swift-atomics.txt */,
+				A10000000000000000000045 /* swift-collections.txt */,
+				A10000000000000000000046 /* SwiftTerm.txt */,
+			);
+			path = Licenses;
 			sourceTree = "<group>";
 		};
 		B30000000000000000000002 /* TetherTTYTests */ = {
@@ -300,6 +344,9 @@
 				B10000000000000000000015 /* ConnectionFlowCoordinatorTests.swift */,
 				B10000000000000000000016 /* SSHTerminalViewScrollTests.swift */,
 				B10000000000000000000017 /* KeepAwakeControllerTests.swift */,
+				B10000000000000000000018 /* SessionDiscoveryClassifierTests.swift */,
+				B10000000000000000000019 /* SessionPickerViewModelTests.swift */,
+				B10000000000000000000020 /* OpenSourceLicensesTests.swift */,
 			);
 			path = TetherTTYTests;
 			sourceTree = "<group>";
@@ -423,6 +470,13 @@
 			files = (
 				A20000000000000000000035 /* Assets.xcassets in Resources */,
 				A20000000000000000000030 /* PrivacyInfo.xcprivacy in Resources */,
+				A20000000000000000000040 /* TetherTTY.txt in Resources */,
+				A20000000000000000000041 /* swift-nio-ssh.txt in Resources */,
+				A20000000000000000000042 /* swift-nio.txt in Resources */,
+				A20000000000000000000043 /* swift-crypto.txt in Resources */,
+				A20000000000000000000044 /* swift-atomics.txt in Resources */,
+				A20000000000000000000045 /* swift-collections.txt in Resources */,
+				A20000000000000000000046 /* SwiftTerm.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -474,6 +528,9 @@
 				A20000000000000000000034 /* ConnectionFlowView.swift in Sources */,
 				A20000000000000000000029 /* TerminalStartupAction.swift in Sources */,
 				A20000000000000000000037 /* KeepAwakeController.swift in Sources */,
+				A20000000000000000000038 /* SessionDiscoveryOutcome.swift in Sources */,
+				A20000000000000000000039 /* AboutView.swift in Sources */,
+				A20000000000000000000047 /* PrivacyShieldWindowController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -497,6 +554,9 @@
 				B20000000000000000000014 /* ConnectionFlowCoordinatorTests.swift in Sources */,
 				B20000000000000000000015 /* SSHTerminalViewScrollTests.swift in Sources */,
 				B20000000000000000000017 /* KeepAwakeControllerTests.swift in Sources */,
+				B20000000000000000000018 /* SessionDiscoveryClassifierTests.swift in Sources */,
+				B20000000000000000000019 /* SessionPickerViewModelTests.swift in Sources */,
+				B20000000000000000000020 /* OpenSourceLicensesTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -520,14 +580,16 @@
 				DEVELOPMENT_TEAM = 5TFR2L29DY;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = TetherTTY;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "TetherTTY uses Face ID to protect access to saved SSH tethers.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "TetherTTY connects directly to SSH servers on your local network, such as your own computer.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.tethertty.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -548,14 +610,16 @@
 				DEVELOPMENT_TEAM = 5TFR2L29DY;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = TetherTTY;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "TetherTTY uses Face ID to protect access to saved SSH tethers.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "TetherTTY connects directly to SSH servers on your local network, such as your own computer.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.tethertty.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -575,7 +639,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.tethertty.app.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -594,7 +658,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.tethertty.app.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

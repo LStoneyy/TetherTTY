@@ -1,11 +1,12 @@
 import Foundation
 
 protocol TmuxSessionProvider {
-    func fetchSessions(for request: TerminalConnectionRequest) async throws -> ([TerminalSession], diagnostic: String?)
+    func fetchSessions(for request: TerminalConnectionRequest) async throws -> (sessions: [TerminalSession], outcome: SessionDiscoveryOutcome)
 }
 
+#if DEBUG
 struct SimulatedTmuxSessionProvider: TmuxSessionProvider {
-    func fetchSessions(for request: TerminalConnectionRequest) async throws -> ([TerminalSession], diagnostic: String?) {
+    func fetchSessions(for request: TerminalConnectionRequest) async throws -> (sessions: [TerminalSession], outcome: SessionDiscoveryOutcome) {
         try await Task.sleep(nanoseconds: 500_000_000)
         let now = Date()
         return ([
@@ -31,9 +32,10 @@ struct SimulatedTmuxSessionProvider: TmuxSessionProvider {
                 displayName: "editor",
                 detail: "3 windows, 0 attached"
             ),
-        ], nil)
+        ], .ok)
     }
 }
+#endif
 
 struct RealTmuxSessionProvider: TmuxSessionProvider {
     let sshClient: SSHClient
@@ -42,7 +44,7 @@ struct RealTmuxSessionProvider: TmuxSessionProvider {
         self.sshClient = sshClient
     }
 
-    func fetchSessions(for request: TerminalConnectionRequest) async throws -> ([TerminalSession], diagnostic: String?) {
+    func fetchSessions(for request: TerminalConnectionRequest) async throws -> (sessions: [TerminalSession], outcome: SessionDiscoveryOutcome) {
         let result = try await sshClient.execute(
             SSHShellRequest(
                 host: request.connection.host,
@@ -53,16 +55,12 @@ struct RealTmuxSessionProvider: TmuxSessionProvider {
             command: "PATH=\"$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH\" tmux list-sessions -F '#{session_name}\t#{session_windows}\t#{session_attached}\t#{session_created}'"
         )
         let sessions = TmuxSessionParser.parse(result.stdout)
-        let diagnostic: String? = {
-            if result.exitStatus != 0 {
-                let trimmed = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-                return trimmed.isEmpty ? "tmux exited \(result.exitStatus)" : trimmed
-            }
-            if sessions.isEmpty && !result.stderr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                return result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-            }
-            return nil
-        }()
-        return (sessions, diagnostic)
+        let outcome = SessionDiscoveryClassifier.classify(
+            tool: .tmux,
+            exitStatus: result.exitStatus,
+            stderr: result.stderr,
+            sessionCount: sessions.count
+        )
+        return (sessions, outcome)
     }
 }
