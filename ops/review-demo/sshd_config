@@ -1,0 +1,52 @@
+# sshd_config for the TetherTTY App Review demo server.
+# Hardened: password auth only, no forwarding, no root, tightly scoped user.
+
+Port 2222
+AddressFamily any
+ListenAddress 0.0.0.0
+ListenAddress ::
+
+# Host keys persist on a named volume so the fingerprint TetherTTY's TOFU
+# pinning sees stays stable across rebuilds/redeploys.
+HostKey /etc/ssh/keys/ssh_host_ed25519_key
+HostKey /etc/ssh/keys/ssh_host_ecdsa_key
+
+# Auth
+PermitRootLogin no
+AllowUsers review
+PasswordAuthentication yes
+KbdInteractiveAuthentication no
+PubkeyAuthentication no
+PermitEmptyPasswords no
+MaxAuthTries 3
+LoginGraceTime 20
+MaxStartups 5:50:10
+
+# Sessions: the app opens a few exec channels (session discovery, herdr
+# probe) plus one interactive PTY shell per connection.
+MaxSessions 10
+
+# No forwarding of any kind: this box only ever needs a shell/exec channel.
+DisableForwarding yes
+AllowTcpForwarding no
+AllowStreamLocalForwarding no
+AllowAgentForwarding no
+X11Forwarding no
+PermitTunnel no
+GatewayPorts no
+
+# Misc hardening
+PermitUserEnvironment no
+UseDNS no
+LogLevel VERBOSE
+ClientAliveInterval 30
+ClientAliveCountMax 4
+
+# OpenSSH >= 9.8 (this image ships OpenSSH 10.0p2). Throttles repeated
+# failed/aborted auth attempts per source address.
+PerSourcePenalties yes
+
+# No sftp subsystem is configured on purpose: this demo only needs a shell.
+
+PrintMotd yes
+Banner none

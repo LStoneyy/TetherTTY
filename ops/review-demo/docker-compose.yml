@@ -1,0 +1,61 @@
+services:
+  review-demo:
+    build: .
+    init: false # tini is already the image ENTRYPOINT (PID 1 reaping)
+    restart: unless-stopped
+    ports:
+      - "2222:2222"
+    environment:
+      REVIEW_PASSWORD: ${REVIEW_PASSWORD:?REVIEW_PASSWORD must be set}
+    volumes:
+      - review-demo-host-keys:/etc/ssh/keys
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN   # entrypoint.sh applies the egress firewall, then drops this from the bounding set before sshd starts
+      - SETUID      # sshd privilege separation + setuid to the 'review' user on login
+      - SETGID      # sshd privilege separation + setgid to the 'review' group on login
+      - SYS_CHROOT  # sshd privilege-separation sandbox (chroot) for the pre-auth monitor
+      - CHOWN       # chpasswd/useradd-style updates to /etc/passwd,shadow; reset-demo re-chowning /home/review
+      - FOWNER      # chmod/chown by root on files owned by the 'review' uid
+      - DAC_OVERRIDE # reset-demo must read/write/unlink inside the review-
+                     # owned, mode-0700 /home/review on every run after the
+                     # first (it locks the directory down at the end of each
+                     # reset). Empirically required: a first run against a
+                     # fresh/root-owned home directory works without it, but
+                     # the second (idempotent, nightly-equivalent) run fails
+                     # with "Permission denied" traversing/unlinking inside
+                     # the now review-owned 0700 directory without this cap.
+      - AUDIT_WRITE # PAM/login audit records written by sshd on login
+      - KILL        # reset-demo signalling processes owned by the 'review' user
+    security_opt:
+      - "no-new-privileges:true"
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 128
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      # TCP check against the sshd port rather than pgrep: it also proves
+      # sshd is actually accepting connections (and that the loopback path
+      # through the INPUT firewall rules is intact), not just that a
+      # process named sshd exists.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/2222"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    # read_only rootfs is intentionally NOT enabled: chpasswd/useradd-style
+    # steps need a writable /etc (shadow, passwd), and the demo's /home/review
+    # and /tmp are rewritten in place on every reset. Nothing else needs
+    # persistence beyond the host-key volume, so this is a deliberate,
+    # narrow trade-off rather than an oversight.
+    tmpfs:
+      - /run
+      - /var/run
+
+volumes:
+  review-demo-host-keys:
