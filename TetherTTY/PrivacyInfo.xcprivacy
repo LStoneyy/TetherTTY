@@ -14,9 +14,15 @@
     <key>NSPrivacyCollectedDataTypes</key>
     <array/>
 
-    <!-- Required-reason API declarations for the app's own usage.
+    <!-- Required-reason API declarations.
          The app persists its own connection list, host-key trust, and app
-         state in UserDefaults (access to information stored by the app itself). -->
+         state in UserDefaults (access to information stored by the app itself).
+
+         File timestamp APIs (`stat`/`fstat`/`lstat`) are pulled in transitively by the
+         statically-linked SwiftNIO dependency (NIOPosix/System.swift, part of the swift-nio
+         package used via swift-nio-ssh for the app's SSH transport) and are present as
+         undefined symbols in the Release binary (confirmed via `nm -u`), even though TetherTTY's
+         own code never calls these APIs directly. -->
     <key>NSPrivacyAccessedAPITypes</key>
     <array>
         <dict>
@@ -25,6 +31,16 @@
             <key>NSPrivacyAccessedAPITypeReasons</key>
             <array>
                 <string>CA92.1</string>
+            </array>
+        </dict>
+        <dict>
+            <!-- stat / fstat / lstat, from swift-nio's NIOPosix (Sources/NIOPosix/System.swift),
+                 linked transitively via swift-nio-ssh (NIOCore/NIOPosix products). -->
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>C617.1</string>
             </array>
         </dict>
     </array>

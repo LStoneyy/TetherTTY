@@ -1,6 +1,6 @@
 # Sicherheitsplan: TetherTTY
 
-**Status:** Abgeschlossen — Phasen 0–3, 5, 6 umgesetzt und in `main` gemergt; Repository öffentlich; Phase 4 (SEC-04) als Restrisiko akzeptiert. Gate 1 (Open-Source-Release) erfüllt.
+**Status:** Abgeschlossen — Phasen 0–3, 5, 6 umgesetzt und in `main` gemergt; Repository öffentlich; Phase 4 (SEC-04) umgesetzt. Gate 1 (Open-Source-Release) erfüllt.
 **Erstellt:** 2026-07-31
 **Projekt:** TetherTTY (iOS SSH Companion)
 **Repository:** `/Users/lukas/code/TetherTTY`
@@ -17,7 +17,7 @@
 | 1 | SSH-Vertrauensgrenze (SEC-01, SEC-02, SEC-09) | ✅ Umgesetzt |
 | 2 | Terminal-Grenze (SEC-03, SEC-07, SEC-08) | ✅ Umgesetzt |
 | 3 | Ressourcen & Logging (SEC-05, SEC-06) | ✅ Umgesetzt |
-| 4 | Lifecycle & Data Exposure (SEC-04) | ⏭️ Ausgelassen — als Restrisiko akzeptiert (siehe unten) |
+| 4 | Lifecycle & Data Exposure (SEC-04) | ✅ Umgesetzt (Privacy Cover + Re-Lock nach 5 Minuten) |
 | 5 | Input- & Data-Hardening | ✅ Umgesetzt |
 | 6 | Open-Source & Release-Ops (SEC-10) | ✅ Umgesetzt |
 
@@ -27,27 +27,30 @@ Jede umgesetzte Phase ist ein eigener, reviewter Commit mit grünem Testlauf. Di
 
 Alle Phasen sind über einzeln reviewte Pull Requests in `main` gemergt; die CI-Pipeline (GitHub Actions, `Build & Test`) läuft grün. Konkret erfüllt:
 
-- **Code:** Alle High/Medium-Befunde behoben; SEC-04 als dokumentiertes Restrisiko akzeptiert (siehe unten).
+- **Code:** Alle High/Medium-Befunde behoben; SEC-04 implementiert (2026-11-07).
 - **Repository:** öffentlich; `SECURITY.md` (GitHub Private Vulnerability Reporting **aktiviert**), `CONTRIBUTING.md`, `.github/CODEOWNERS`.
 - **Automatisierung:** GitHub Actions Build/Test bei Push und PR; Dependabot für SPM und GitHub Actions aktiv (u. a. Bump auf swift-nio-ssh 0.15.0 mit grüner Testsuite verifiziert).
 - **Governance:** Branch Protection auf `main` — Pflicht-Statuscheck `Build & Test (iOS Simulator)`, Review-Pflicht mit Code-Owner-Review, kein Force-Push/Delete, `enforce_admins: false` (Inhaber-Bypass für eigene PRs).
 - **Secrets:** gitleaks Full-History sauber; keine Signierungs-/Provisioning-Artefakte getrackt.
 - **Privacy:** `PrivacyInfo.xcprivacy` mit deklarierter UserDefaults-Nutzung (CA92.1), kein Tracking, keine gesammelten Datentypen.
 
-Offen bleibt ausschließlich **Gate 2 (App Store)** — nicht release-blockierend für Open Source: Test auf physischem Gerät (Background/App-Switcher, OSC-52-Regression, Host-Key-Flow), Verifikation der NIO/SwiftTerm Required-Reason-APIs im Xcode-Archive-Privacy-Report, App-Store-Privacy-Labels sowie die erneute Bewertung von SEC-04.
+Offen bleibt ausschließlich **Gate 2 (App Store)** — nicht release-blockierend für Open Source: Test auf physischem Gerät (Background/App-Switcher, OSC-52-Regression, Host-Key-Flow), Verifikation der NIO/SwiftTerm Required-Reason-APIs im Xcode-Archive-Privacy-Report (SwiftNIO: File Timestamp C617.1 hinzugefügt), und App-Store-Privacy-Labels.
 
-### Formale Risikoakzeptanz: SEC-04 (Lifecycle / Data Exposure)
+### SEC-04 (Lifecycle / Data Exposure): umgesetzt
 
-Phase 4 wurde bewusst nicht umgesetzt, um den bestehenden Auto-Reattach-Komfort (nahtloses Wiederaufnehmen der Session beim App-Foreground) zu erhalten.
+**Implementierung (2026-11-07):**
 
-- **Befund:** SEC-04 (Medium) — beim Wechsel in den Hintergrund wird kein Privacy-Cover gesetzt, der App-Lock wird bei Rückkehr aus dem Hintergrund nicht erneut erzwungen, und die serverseitige Session bleibt für den Reattach verfügbar.
-- **Auswirkung / Precondition:** Erfordert **physischen Zugriff auf ein entsperrtes, in den Hintergrund gelegtes Gerät** (Diebstahl/Shoulder-Surfing im entsperrten Zustand). Kein Netzwerk- oder Remote-Server-Vektor. Betroffen sind Terminal-Inhalt im App-Switcher-Snapshot sowie Zugriff auf Host-Liste und laufende Session ohne erneute Face-ID-Prüfung.
-- **Begründung der Akzeptanz:** Bewusste Abwägung zugunsten des Kern-Features (Auto-Reattach). Der Face-ID-Gate bleibt ein Eintritts-Gate.
+SEC-04 wurde vollständig umgesetzt. Die App zeigt ein undurchsichtiges Privacy-Cover (App-Hintergrund + Sigil) über allen Inhalten, wenn die App inaktiv wird oder in den Hintergrund geht — der App-Switcher-Snapshot zeigt keine Terminal-Ausgaben, Hostnamen oder Anmeldedaten. Das Cover liegt in einem eigenen Fenster über allen Inhalten (inkl. Full-Screen-Covers und Sheets); beim Einblenden wird die Texteingabe App-weit beendet. Bei Rückkehr nach 5 oder mehr Minuten im Hintergrund sind Face ID bzw. der Geräte-Code erforderlich; ein Prompt startet automatisch einmal, wird er abgebrochen, bleibt der Sperrbildschirm mit Unlock-Button stehen. App-Zustand und serverseitige tmux-/herdr-Session bleiben erhalten; nach dem Entsperren läuft der nahtlose Reattach wie gewohnt. Abgedeckt durch Unit-Tests in `AppLockViewModelTests`.
+
+**Restrisiko:**
+
+Innerhalb des 5-Minuten-Fensters kann eine Person mit physischem Zugriff auf das entsperrt verlassene Telefon zur App zurückkehren, ohne sich erneut zu authentifizieren. Das Timeout ist in Version 1.0 fest (keine Einstellung). Wird die App vom Betriebssystem im Hintergrund beendet, startet die nächste Instanz normal gesperrt.
+
+**Formale Risikoakzeptanz aufgehoben:**
+
+Die frühere Risikoakzeptanz aus 2026-07-31 ist hiermit aufgehoben (siehe Umsetzungsstatus oben).
+
 - **Besitzer:** Repository-Maintainer (LStoneyy).
-- **Datum der Akzeptanz:** 2026-07-31.
-- **Überprüfungsdatum:** 2027-01-31 (bzw. spätestens vor einem öffentlichen App-Store-Release neu bewerten).
-- **Auswirkung auf Gates:** Blockiert **nicht** das Repository-Release (Gate 1). Für Gate 2 (App Store) gilt SEC-04 als dokumentiertes, akzeptiertes Restrisiko; ein späterer App-Store-Release sollte Phase 4 entweder umsetzen oder diese Akzeptanz erneut bestätigen.
-- **Transparenz:** Das Restrisiko ist im README ("Threat model & known limitations") offen dokumentiert.
 
 **Wichtig:** Alle übrigen Code-Referenzen unten beziehen sich auf den ursprünglichen Audit-Stand (2026-07-31); nach der Umsetzung können sich Zeilennummern verschoben haben.
 
@@ -561,18 +564,18 @@ Keine Kalenderschätzungen, nur relative Komplexität.
 
 ### Gate 2: Öffentliche App / App Store
 
-- [ ] Alle High-Befunde (SEC-01, SEC-03) implementiert und getestet.
-- [ ] Alle Medium-Befunde (SEC-04, SEC-05, SEC-06, SEC-07) implementiert und getestet.
+- [x] Alle High-Befunde (SEC-01, SEC-03) implementiert und getestet.
+- [x] Alle Medium-Befunde (SEC-04, SEC-05, SEC-06, SEC-07) implementiert und getestet.
 - [ ] Alle Low-Befunde behoben oder als dokumentierte Restrisiken akzeptiert.
-- [ ] Alle Tests frisch bestanden, einschließlich der aktuell 49 deklarierten XCTest-Methoden und neuer Security-Tests.
+- [x] Alle Tests frisch bestanden, einschließlich der aktuell 187 Tests, iPhone- und iPad-Simulator, 2026-11-07.
 - [ ] Release-Build auf Simulator und physischem Gerät erfolgreich.
 - [ ] Physisches Device: Background- und App-Switcher-Test bestanden.
 - [ ] OSC 52 manueller Regressionstest bestanden.
 - [ ] Host-Key-Integrationstest bestanden.
-- [ ] `PrivacyInfo.xcprivacy` vorhanden, Abhängigkeiten inspiziert und nur tatsächlich verwendete API-Kategorien deklariert.
+- [x] `PrivacyInfo.xcprivacy` vorhanden, Abhängigkeiten inspiziert und nur tatsächlich verwendete API-Kategorien deklariert.
 - [ ] App-Store-Privacy-Labels entsprechen dem tatsächlich geprüften Datenfluss.
-- [ ] README Threat-Model und Security Claims korrekt und aktuell.
-- [ ] Keine ungelösten High- oder Medium-Befunde oder explizite, unterzeichnete Risikoakzeptanz mit Besitzer, Begründung, Ablaufdatum und Überprüfungsdatum.
+- [x] README Threat-Model und Security Claims korrekt und aktuell.
+- [x] Keine ungelösten High- oder Medium-Befunde oder explizite, unterzeichnete Risikoakzeptanz mit Besitzer, Begründung, Ablaufdatum und Überprüfungsdatum.
 
 **Policy:** Keine ungelösten High- oder Medium-Befunde vor App-Store-Release ohne formale Risikoakzeptanz. Ungelöste Low-Befunde müssen behoben oder als dokumentierte Restrisiken akzeptiert werden.
 
@@ -662,16 +665,16 @@ Jede Phase wird separat committet mit klarer Beschreibung.
 
 #### Global
 
-- [ ] Alle High-Befunde (SEC-01, SEC-03) behoben und getestet.
-- [ ] Alle Medium-Befunde (SEC-04, SEC-05, SEC-06, SEC-07) behoben und getestet.
+- [x] Alle High-Befunde (SEC-01, SEC-03) behoben und getestet.
+- [x] Alle Medium-Befunde (SEC-04, SEC-05, SEC-06, SEC-07) behoben und getestet.
 - [ ] Alle Low-Befunde behoben oder als dokumentierte Restrisiken akzeptiert.
 - [ ] Alle bestehenden Tests (aktuell 49 XCTest-Methoden) frisch bestanden.
 - [ ] Neue Security-Regressionstests vorhanden und bestanden.
 - [ ] Release Build (Simulator und physisches Device) erfolgreich.
 - [ ] `SECURITY.md` vorhanden mit GitHub PVR.
 - [ ] GitHub Actions Build/Test Pipeline aktiv.
-- [ ] `PrivacyInfo.xcprivacy` vorhanden, Abhängigkeiten inspiziert und nur tatsächlich verwendete API-Kategorien deklariert.
-- [ ] README aktualisiert.
+- [x] `PrivacyInfo.xcprivacy` vorhanden, Abhängigkeiten inspiziert und nur tatsächlich verwendete API-Kategorien deklariert.
+- [x] README aktualisiert.
 - [ ] Keine Secrets im Repository (Full-History Scan bestanden).
-- [ ] Keine ungelösten High- oder Medium-Befunde ohne formale Risikoakzeptanz.
+- [x] Keine ungelösten High- oder Medium-Befunde ohne formale Risikoakzeptanz.
 - [ ] Restrisiken dokumentiert.

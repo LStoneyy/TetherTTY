@@ -2,6 +2,8 @@ import SwiftUI
 
 struct AppShellView: View {
     @StateObject private var lockViewModel = AppLockViewModel()
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var shieldController = PrivacyShieldWindowController()
 
     var body: some View {
         ZStack {
@@ -24,10 +26,27 @@ struct AppShellView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .background(
+            WindowSceneReader { windowScene in
+                shieldController.attach(to: windowScene, viewModel: lockViewModel)
+                shieldController.update(isVisible: lockViewModel.isShieldVisible)
+            }
+        )
+        .onChange(of: scenePhase) { _, newPhase in
+            // Synchronous: the cover must be up before the app-switcher snapshot is taken, so
+            // this cannot wait for a `Task` hop to a later main-actor turn.
+            lockViewModel.scenePhaseDidChange(to: newPhase)
+            shieldController.update(isVisible: lockViewModel.isShieldVisible)
+        }
+        .onChange(of: lockViewModel.isShieldVisible) { _, isVisible in
+            // Catches shield-state changes not driven by a scenePhase transition, e.g. a
+            // successful (or denied) automatic/manual re-authentication completing later.
+            shieldController.update(isVisible: isVisible)
+        }
     }
 }
 
-private struct LockedVaultView: View {
+struct LockedVaultView: View {
     let isAuthenticating: Bool
     let errorMessage: String?
     let unlock: () -> Void

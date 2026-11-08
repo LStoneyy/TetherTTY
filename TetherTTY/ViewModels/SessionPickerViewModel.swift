@@ -9,6 +9,8 @@ final class SessionPickerViewModel: ObservableObject {
     @Published var herdrErrorMessage: String?
     @Published var tmuxDiagnostic: String?
     @Published var herdrDiagnostic: String?
+    @Published private(set) var tmuxNotInstalled = false
+    @Published private(set) var herdrNotInstalled = false
 
     var sessions: [TerminalSession] {
         tmuxSessions + herdrSessions + [.plainShellSession]
@@ -34,22 +36,38 @@ final class SessionPickerViewModel: ObservableObject {
         herdrErrorMessage = nil
         tmuxDiagnostic = nil
         herdrDiagnostic = nil
+        tmuxNotInstalled = false
+        herdrNotInstalled = false
 
         let tmuxTask = Task { try await tmuxProvider.fetchSessions(for: request) }
         let herdrTask = Task { try await herdrProvider.fetchSessions(for: request) }
 
         switch await tmuxTask.result {
         case .success(let result):
-            tmuxSessions = result.0
-            tmuxDiagnostic = result.1
+            tmuxSessions = result.sessions
+            switch result.outcome {
+            case .ok:
+                break
+            case .notInstalled:
+                tmuxNotInstalled = true
+            case .diagnostic(let message):
+                tmuxDiagnostic = message
+            }
         case .failure(let error):
             errorMessage = error.localizedDescription
         }
 
         switch await herdrTask.result {
         case .success(let result):
-            herdrSessions = result.0
-            herdrDiagnostic = result.1
+            herdrSessions = result.sessions
+            switch result.outcome {
+            case .ok:
+                break
+            case .notInstalled:
+                herdrNotInstalled = true
+            case .diagnostic(let message):
+                herdrDiagnostic = message
+            }
         case .failure(let error):
             herdrErrorMessage = error.localizedDescription
         }

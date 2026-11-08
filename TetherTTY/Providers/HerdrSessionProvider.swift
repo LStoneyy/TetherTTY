@@ -1,11 +1,12 @@
 import Foundation
 
 protocol HerdrSessionProvider {
-    func fetchSessions(for request: TerminalConnectionRequest) async throws -> ([TerminalSession], diagnostic: String?)
+    func fetchSessions(for request: TerminalConnectionRequest) async throws -> (sessions: [TerminalSession], outcome: SessionDiscoveryOutcome)
 }
 
+#if DEBUG
 struct SimulatedHerdrSessionProvider: HerdrSessionProvider {
-    func fetchSessions(for request: TerminalConnectionRequest) async throws -> ([TerminalSession], diagnostic: String?) {
+    func fetchSessions(for request: TerminalConnectionRequest) async throws -> (sessions: [TerminalSession], outcome: SessionDiscoveryOutcome) {
         try await Task.sleep(nanoseconds: 500_000_000)
         return ([
             TerminalSession(
@@ -32,9 +33,10 @@ struct SimulatedHerdrSessionProvider: HerdrSessionProvider {
                 displayName: "builder",
                 detail: "agent · idle"
             ),
-        ], nil)
+        ], .ok)
     }
 }
+#endif
 
 struct RealHerdrSessionProvider: HerdrSessionProvider {
     let sshClient: SSHClient
@@ -43,7 +45,7 @@ struct RealHerdrSessionProvider: HerdrSessionProvider {
         self.sshClient = sshClient
     }
 
-    func fetchSessions(for request: TerminalConnectionRequest) async throws -> ([TerminalSession], diagnostic: String?) {
+    func fetchSessions(for request: TerminalConnectionRequest) async throws -> (sessions: [TerminalSession], outcome: SessionDiscoveryOutcome) {
         let result = try await sshClient.execute(
             SSHShellRequest(
                 host: request.connection.host,
@@ -54,16 +56,12 @@ struct RealHerdrSessionProvider: HerdrSessionProvider {
             command: "PATH=\"$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH\" herdr session list --json"
         )
         let sessions = HerdrSessionParser.parse(result.stdout)
-        let diagnostic: String? = {
-            if result.exitStatus != 0 {
-                let trimmed = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-                return trimmed.isEmpty ? "herdr exited \(result.exitStatus)" : trimmed
-            }
-            if sessions.isEmpty && !result.stderr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                return result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-            }
-            return nil
-        }()
-        return (sessions, diagnostic)
+        let outcome = SessionDiscoveryClassifier.classify(
+            tool: .herdr,
+            exitStatus: result.exitStatus,
+            stderr: result.stderr,
+            sessionCount: sessions.count
+        )
+        return (sessions, outcome)
     }
 }

@@ -36,6 +36,8 @@ struct SessionPickerView: View {
 
                         if let diagnostic = viewModel.tmuxDiagnostic {
                             diagnosticBanner(message: diagnostic, provider: "tmux")
+                        } else if viewModel.tmuxNotInstalled {
+                            notInstalledLine(tool: "tmux")
                         }
 
                         if !viewModel.herdrSessions.isEmpty {
@@ -47,6 +49,8 @@ struct SessionPickerView: View {
 
                         if let diagnostic = viewModel.herdrDiagnostic {
                             diagnosticBanner(message: diagnostic, provider: "Herdr")
+                        } else if viewModel.herdrNotInstalled {
+                            notInstalledLine(tool: "herdr")
                         }
 
                         if let herdrError = viewModel.herdrErrorMessage {
@@ -178,12 +182,13 @@ struct SessionPickerView: View {
 
     private var emptyState: some View {
         VStack(spacing: 14) {
-            Text("Keine Sessions gefunden")
+            Text("No sessions found")
                 .font(.system(.subheadline, design: .rounded))
                 .foregroundStyle(AbyssalTheme.bone.opacity(0.55))
 
-            if viewModel.tmuxDiagnostic != nil || viewModel.herdrDiagnostic != nil {
-                Text("Weitere Informationen oben.")
+            if viewModel.tmuxDiagnostic != nil || viewModel.herdrDiagnostic != nil
+                || viewModel.tmuxNotInstalled || viewModel.herdrNotInstalled {
+                Text("See details above.")
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(AbyssalTheme.bone.opacity(0.4))
             }
@@ -191,7 +196,7 @@ struct SessionPickerView: View {
             Button {
                 Task { await viewModel.fetchSessions() }
             } label: {
-                Label("Erneut versuchen", systemImage: "arrow.clockwise")
+                Label("Try again", systemImage: "arrow.clockwise")
                     .font(.system(.caption, design: .rounded, weight: .medium))
                     .foregroundStyle(AbyssalTheme.pacificCyan)
             }
@@ -199,6 +204,20 @@ struct SessionPickerView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 24)
+    }
+
+    private func notInstalledLine(tool: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "info.circle")
+                .font(.system(size: 12))
+                .foregroundStyle(AbyssalTheme.pacificCyan)
+
+            Text("\(tool) isn't installed on this host.")
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(AbyssalTheme.bone.opacity(0.55))
+        }
+        .padding(10)
+        .background(AbyssCardBackground())
     }
 
     private func herdrErrorBanner(message: String) -> some View {

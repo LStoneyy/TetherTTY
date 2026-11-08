@@ -6,6 +6,7 @@ struct HostListView: View {
     /// The active connect journey. Presented immediately on Connect and driven through its phases
     /// by the coordinator; `nil` when no connect is in progress.
     @State private var flowCoordinator: ConnectionFlowCoordinator?
+    @State private var isShowingAbout = false
 
     var body: some View {
         NavigationStack {
@@ -42,6 +43,17 @@ struct HostListView: View {
             }
             .background(AbyssBackground())
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        isShowingAbout = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(AbyssalTheme.pearlAqua)
+                    }
+                    .accessibilityLabel("About")
+                }
+
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         editorDraft = ConnectionDraft()
@@ -59,6 +71,9 @@ struct HostListView: View {
                 ConnectionEditorView(initialDraft: draft) { savedDraft in
                     viewModel.save(savedDraft)
                 }
+            }
+            .sheet(isPresented: $isShowingAbout) {
+                AboutView()
             }
             .fullScreenCover(item: $flowCoordinator, onDismiss: {
                 // Backing out anywhere in the flow (Cancel / Back / Close) resets any pending host

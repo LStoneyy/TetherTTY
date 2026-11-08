@@ -17,7 +17,7 @@
 
 🧪 **In private testing.** The security remediation is complete and merged — all High/Medium findings are fixed (see [`security-audit.md`](security-audit.md)), and the repository has cleared its open-source gate: CI, branch protection, Dependabot, private vulnerability reporting, and a clean full-history secret scan.
 
-The app is currently being tested on-device (installed privately via Xcode). **Next up: preparing the App Store release** — on-device security verification, the privacy manifest and App Store privacy labels, and a re-evaluation of the accepted SEC-04 residual risk (see [`security-audit.md`](security-audit.md), Gate 2).
+The app is currently being tested on-device (installed privately via Xcode). **App Store release preparation is underway:** SEC-04 (privacy cover + re-lock after 5 minutes in the background) is implemented, and the privacy manifest is updated with required-reason API declarations. Remaining: on-device verification and App Store submission (see [`security-audit.md`](security-audit.md), Gate 2).
 
 ## Overview
 
@@ -34,7 +34,7 @@ All data stays local — connections, credentials, and host-key trust are stored
 * **Session discovery** — automatic discovery of running `tmux` and `herdr` sessions by executing real CLI commands and parsing output; attach with a single tap.
 * **Seamless reattach** — lock your phone or background the app, then come back and pick up exactly where you left off: TetherTTY silently re-establishes the SSH connection and re-attaches to the same `tmux`/`herdr` session, no manual re-selection. See [Persistent Sessions](#persistent-sessions).
 * **Host-key trust** — OpenSSH-style trust-on-first-use (TOFU); SHA256 host-key fingerprints are locally pinned and verified on each connection.
-* **Face ID app lock** — biometric unlock gate before accessing your host list, adding a security layer for sensitive credentials.
+* **Face ID app lock** — biometric unlock gate before accessing your host list, adding a security layer for sensitive credentials. When the app goes inactive or to the background, an opaque privacy cover is shown above all content (no terminal output or credentials visible), and if backgrounded for 5+ minutes, Face ID / device passcode is required again on return.
 * **Keychain credentials** — SSH passwords are encrypted and stored per connection using iOS Keychain.
 * **Session picker** — clean UI to select between available tmux/Herdr sessions or open a plain shell.
 * **Abyssal design** — a custom dark theme with a deep teal/aqua/mint palette ("The Loom" for your host list, "tethers" for connections, a circular sigil mark).
@@ -50,7 +50,7 @@ All data stays local — connections, credentials, and host-key trust are stored
 6. **Pick a session** — select an existing session or open a plain shell.
 7. **Terminal** — SSH shell opens with full terminal emulation and keyboard extras.
 8. **Reconnect** — disconnect or reconnect at any time; returns to the session picker.
-9. **Lock & resume** — lock your phone and unlock later; TetherTTY reattaches to the same session automatically (see below).
+9. **Lock & resume** — lock your phone and unlock later; if you return within 5 minutes, TetherTTY reattaches to the same session automatically; if more than 5 minutes have passed, Face ID / device passcode is required first, then reattachment continues as usual (see below).
 
 ## Persistent Sessions
 
@@ -61,6 +61,7 @@ Lock your phone in the middle of a build, unlock it later, and your session is s
 **Behavior:**
 
 - A short grace period (~2s) means a quick glance at your phone won't force a reconnect.
+- If the app has been in the background for 5 or more minutes, Face ID / device passcode is required on return before reconnecting.
 - On return, a **Reconnecting…** indicator is shown while the session is restored. Reconnection is silent — no re-entering credentials within the same app session.
 - If reattach fails, TetherTTY retries a few times with exponential backoff, then falls back to a manual reconnect option.
 - **TCP keepalive** is enabled on the interactive connection so mid-session drops (e.g. Wi-Fi → cellular handoff) are detected in a bounded time rather than hanging.
@@ -137,7 +138,7 @@ xcodebuild test -project TetherTTY.xcodeproj -scheme TetherTTY \
 - **On-device storage.** Connections, host-key trust, and app state are stored locally on your iPhone.
 - **Keychain encryption.** SSH passwords are encrypted by iOS Keychain; not stored in plain text.
 - **Host-key pinning (fail-closed).** SSH host keys are verified using OpenSSH-style TOFU (trust-on-first-use); fingerprints are SHA256 and stored locally. An unknown host, a changed host key, or a trust-store read error is **rejected** — verification fails closed.
-- **Biometric gate.** Face ID protects access to your host list and credentials at launch.
+- **Biometric gate.** Face ID protects access to your host list and credentials at launch; an opaque privacy cover hides the app content whenever the app is inactive or backgrounded, and after 5 or more minutes in the background Face ID / passcode is required again.
 
 ### Hardening
 
@@ -157,7 +158,7 @@ TetherTTY's trust boundaries and the full security analysis are documented in
 
 - **TOFU first contact.** On the very first connection to a host, the fingerprint is trusted on first use. Without out-of-band verification, a first-contact MITM is possible — verify the displayed SHA256 fingerprint against your server when in doubt.
 - **A fully compromised server** controls its own terminal output; TetherTTY limits dangerous local side effects but the output itself remains untrusted.
-- **Physical access to an unlocked, backgrounded device.** The Face ID gate is an *entry* gate; it is not re-challenged when returning from the background, and the app keeps the server-side session available for the seamless reattach described above. This is an accepted trade-off for convenience (tracked as SEC-04 in `security-audit.md`). If this matters to you, fully close the app when handing your unlocked phone to someone.
+- **Residual risk: 5-minute re-lock window.** If the app is in the background for less than 5 minutes, returning to the app does not require re-authentication — someone with physical access to an already-unlocked phone could return to the app without re-entering Face ID or passcode. The 5-minute timeout is fixed in version 1.0. This window only concerns access to the app itself: the privacy cover is shown as soon as the app becomes inactive, so app-switcher snapshots don't reveal content. If this window matters to you, fully close the app when handing your unlocked phone to someone. See SEC-04 in [`security-audit.md`](security-audit.md) for the full implementation details and risk analysis.
 
 ### Reporting a vulnerability
 
