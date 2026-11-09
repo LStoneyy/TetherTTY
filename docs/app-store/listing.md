@@ -36,7 +36,9 @@ Language: English (U.S.) as primary localization.
 - Data collection: **"No, we do not collect data from this app."** → label "Data Not Collected"
 - Privacy Policy URL as above
 
-## Export compliance (per build, or answered once via `ITSAppUsesNonExemptEncryption = YES`)
+## Export compliance (answered per build in App Store Connect / TestFlight)
+
+`ITSAppUsesNonExemptEncryption` is intentionally **not** set in Info.plist: with `YES`, App Store Connect rejects the upload ("Invalid Export Compliance Code") unless approved encryption documentation and its `ITSEncryptionExportComplianceCode` exist. Without the key, App Store Connect asks these questions for each build:
 
 1. Does your app use encryption? **Yes**
 2. Does it qualify for any of the exemptions (e.g. only Apple OS encryption)? **No**. SSH crypto comes from swift-crypto/BoringSSL, not iOS.
@@ -122,11 +124,12 @@ The demo server is isolated (no outbound network access) and reset nightly. The 
 
 ## Screenshots
 
-Required sizes (portrait):
+Sizes (portrait). Upload as JPEG or PNG **without alpha channel**:
 
 | Display | Device to capture on | Pixels |
 | --- | --- | --- |
-| iPhone 6.9" | iPhone 18 Pro Max simulator (or any 6.9" device) | 1320 × 2868 |
+| iPhone, Dynamic Island medium (6.3", **required**) | downscaled from the 6.9" captures | 1206 × 2622 |
+| iPhone, Dynamic Island large (6.9", optional) | iPhone 18 Pro Max simulator | 1320 × 2868 |
 | iPad 13" | iPad Pro 13-inch (M5) simulator | 2064 × 2752 |
 
 Suggested set, 3 to 5 each, connected to the demo server:

@@ -577,10 +577,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 5TFR2L29DY;
+				DEVELOPMENT_TEAM = C245VQQJ3U;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = TetherTTY;
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "TetherTTY uses Face ID to protect access to saved SSH tethers.";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "TetherTTY connects directly to SSH servers on your local network, such as your own computer.";
@@ -607,10 +606,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 5TFR2L29DY;
+				DEVELOPMENT_TEAM = C245VQQJ3U;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = TetherTTY;
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "TetherTTY uses Face ID to protect access to saved SSH tethers.";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "TetherTTY connects directly to SSH servers on your local network, such as your own computer.";
