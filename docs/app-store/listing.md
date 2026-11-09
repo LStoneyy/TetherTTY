@@ -9,7 +9,7 @@ Language: English (U.S.) as primary localization.
 | --- | --- |
 | Name [30] | `TetherTTY - SSH` |
 | Subtitle [30] | `Reattach to tmux & herdr` |
-| Bundle ID | `dev.tethertty.app` |
+| Bundle ID | `info.webcommits.tethertty` |
 | SKU | `tethertty-ios` |
 | Primary category | Developer Tools |
 | Secondary category | Utilities |
