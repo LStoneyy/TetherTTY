@@ -7,8 +7,8 @@ Language: English (U.S.) as primary localization.
 
 | Field | Value |
 | --- | --- |
-| Name [30] | `TetherTTY: SSH for tmux` |
-| Subtitle [30] | `Reattach to terminal sessions` |
+| Name [30] | `TetherTTY - SSH` |
+| Subtitle [30] | `Reattach to tmux & herdr` |
 | Bundle ID | `dev.tethertty.app` |
 | SKU | `tethertty-ios` |
 | Primary category | Developer Tools |
@@ -88,10 +88,10 @@ TetherTTY is not a replacement for a full-featured SSH suite. It is a quiet teth
 ## Keywords [100 bytes, comma-separated, no spaces]
 
 ```
-terminal,shell,herdr,server,remote,console,devops,sysadmin,xterm,session,linux,client,mosh,ops
+terminal,shell,server,remote,console,devops,sysadmin,xterm,session,linux,client,reconnect,cli
 ```
 
-Drop `mosh` if you want to avoid implying mosh support (TetherTTY does not speak mosh), and replace it with e.g. `cli`.
+Words already in the name or subtitle (`TetherTTY`, `SSH`, `tmux`, `herdr`) are indexed by App Store search and must not be repeated here. `mosh` is deliberately omitted: TetherTTY does not speak mosh.
 
 ## App Review Information
 
