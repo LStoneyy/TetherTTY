@@ -18,15 +18,19 @@ steps=(
   "Uploading build report"
 )
 
-spinner=('|' '/' '-' '\\')
+spinner=('|' '/' '-' '\')
 
+# Size the divider to the pane so it never wraps on narrow (iPhone) terminals.
 divider() {
-  printf '%s\n' "----------------------------------------------------------------"
+  local cols
+  cols=$(tput cols 2>/dev/null || echo 40)
+  (( cols > 64 )) && cols=64
+  printf '%*s\n' "$cols" '' | tr ' ' '-'
 }
 
 while true; do
   divider
-  printf '[demo-ci] starting build #%s (this is a simulated, offline demo)\n' "$RANDOM"
+  printf '[demo-ci] build #%s (simulated, offline)\n' "$RANDOM"
   divider
 
   for step in "${steps[@]}"; do
