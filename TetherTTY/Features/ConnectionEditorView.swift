@@ -33,12 +33,18 @@ struct ConnectionEditorView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
 
+                    // Not `.password`: iOS would treat this as a website login and offer to
+                    // save the SSH password to the Passwords app / iCloud Keychain on top of the
+                    // app's own Keychain storage. `.oneTimeCode` opts the field out of that
+                    // save prompt while keeping secure text entry.
                     SecureField("Password", text: $draft.password)
-                        .textContentType(.password)
+                        .textContentType(.oneTimeCode)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
                 } header: {
                     Text("Login")
                 } footer: {
-                    Text("Passwords are saved through the credential vault boundary, not inside the connection list model.")
+                    Text("Your password is stored in the iOS Keychain on this device only.")
                 }
 
                 Section {
