@@ -100,7 +100,7 @@ Drop `mosh` if you want to avoid implying mosh support (TetherTTY does not speak
 - Password: the value of `REVIEW_PASSWORD` set in Coolify (never commit it)
 - Contact: Lukas Schaffrath, webcommitswebdesigns@gmail.com, +49 1520 7282881
 
-Notes (adjust the fingerprint after deploy):
+Notes:
 
 ```
 TetherTTY is an SSH client. To test it, please use our sandboxed demo server:
@@ -113,7 +113,7 @@ Password: (see the Sign-In Information fields)
 Steps:
 1. Launch the app and unlock with Face ID or the device passcode (the app lock uses the device owner authentication; on a device without Face ID the passcode is used).
 2. Tap "+" (Add Connection) to add a connection and enter the host, port, username and password above. Save.
-3. Tap the connection. On first connect the app shows the server's SSH host key fingerprint; tap "Trust" (expected: SHA256:<FINGERPRINT-ED25519>).
+3. Tap the connection. On first connect the app shows the server's SSH host key fingerprint; tap "Trust" (expected: SHA256:DxIPalOmuDNSu6pw50aoqY9HITxe0ufjakl2LtxWEVk).
 4. The session picker lists the tmux sessions "build" and "logs" under "Tmux Sessions". Tap "build" to attach — you will see a simulated build log. herdr is intentionally not installed, so the app shows a neutral "herdr isn't installed on this host" note.
 5. Optional: send the app to the background and return; the app reconnects and reattaches to the same session automatically.
 
