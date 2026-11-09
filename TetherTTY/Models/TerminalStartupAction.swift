@@ -44,7 +44,9 @@ enum TerminalStartupAction: Equatable {
             // reopen quote). This makes the session name safe to place inside
             // the command regardless of spaces, `;`, `$`, backticks, etc. There
             // is no length limit AFTER quoting.
-            return "tmux attach-session -t \(Self.posixSingleQuote(sessionName))"
+            // `-u`: SwiftTerm is always UTF-8, so force tmux to emit UTF-8 (box drawing,
+            // non-ASCII text) even when the remote shell has no UTF-8 locale configured.
+            return "tmux -u attach-session -t \(Self.posixSingleQuote(sessionName))"
 
         case .herdrAttach(let command):
             // The herdr attach command is a full pre-built command string coming
