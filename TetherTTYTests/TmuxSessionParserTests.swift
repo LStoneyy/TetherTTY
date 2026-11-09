@@ -92,10 +92,60 @@ final class TmuxSessionParserTests: XCTestCase {
             detail: "3 windows, 0 attached"
         )
 
-        XCTAssertEqual(session.startupAction?.renderStartupCommand(), "tmux attach-session -t 'work'")
+        XCTAssertEqual(session.startupAction?.renderStartupCommand(), "tmux -u attach-session -t 'work'")
     }
 
     func testStartupCommandForPlainShell() {
         XCTAssertNil(TerminalSession.plainShellSession.startupAction)
     }
+    // MARK: - Discovery command (UTF-8 / locale regression)
+
+    func testListSessionsCommandForcesUTF8AndUsesTabSeparators() {
+        let command = RealTmuxSessionProvider.listSessionsCommand
+        // Without `-u`, tmux on a host with no UTF-8 locale rewrites the tab separators to `_`
+        // and discovery silently finds no sessions.
+        XCTAssertTrue(command.contains("tmux -u list-sessions"))
+        XCTAssertTrue(command.contains("#{session_name}\t#{session_windows}\t#{session_attached}\t#{session_created}"))
+    }
+
+    func testProviderSendsListCommandAndParsesSessions() async throws {
+        let client = RecordingExecSSHClient(
+            result: SSHExecResult(stdout: "build\t1\t0\t1794221264\nlogs\t1\t0\t1794221264\n", stderr: "", exitStatus: 0)
+        )
+        let provider = RealTmuxSessionProvider(sshClient: client)
+        let request = TerminalConnectionRequest(
+            connection: Connection(alias: "Demo", host: "demo.local", username: "review"),
+            password: "secret"
+        )
+
+        let (sessions, outcome) = try await provider.fetchSessions(for: request)
+
+        XCTAssertEqual(client.commands, [RealTmuxSessionProvider.listSessionsCommand])
+        XCTAssertEqual(sessions.map(\.displayName), ["build", "logs"])
+        XCTAssertEqual(outcome, .ok)
+    }
+
+    func testLocaleMangledOutputYieldsNoSessions() {
+        // Documents the failure mode `-u` prevents: tabs replaced by `_` are unparseable.
+        XCTAssertTrue(TmuxSessionParser.parse("build_1_0_1794221264\n").isEmpty)
+    }
 }
+
+private final class RecordingExecSSHClient: SSHClient {
+    private(set) var commands: [String] = []
+    let result: SSHExecResult
+
+    init(result: SSHExecResult) {
+        self.result = result
+    }
+
+    func openShell(_ request: SSHShellRequest) async throws -> SSHSession {
+        throw CancellationError()
+    }
+
+    func execute(_ request: SSHShellRequest, command: String) async throws -> SSHExecResult {
+        commands.append(command)
+        return result
+    }
+}
+

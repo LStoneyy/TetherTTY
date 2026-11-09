@@ -51,14 +51,14 @@ final class TerminalSecurityFixturesTests: XCTestCase {
 
     func testStartupCommandQuotingNormalName() {
         let action = TerminalStartupAction.tmuxAttach(sessionName: "work")
-        XCTAssertEqual(action.renderStartupCommand(), "tmux attach-session -t 'work'")
+        XCTAssertEqual(action.renderStartupCommand(), "tmux -u attach-session -t 'work'")
     }
 
     func testStartupCommandQuotingMetacharacters() {
         // A malicious session name with a single quote plus shell metacharacters
         // must be fully contained inside a single POSIX-quoted argument.
         let action = TerminalStartupAction.tmuxAttach(sessionName: "a'b; rm -rf ~")
-        XCTAssertEqual(action.renderStartupCommand(), "tmux attach-session -t 'a'\\''b; rm -rf ~'")
+        XCTAssertEqual(action.renderStartupCommand(), "tmux -u attach-session -t 'a'\\''b; rm -rf ~'")
     }
 
     func testStartupCommandRejectsNulCrLf() {

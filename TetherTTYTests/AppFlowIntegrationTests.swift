@@ -102,7 +102,7 @@ final class AppFlowIntegrationTests: XCTestCase {
 
         let sessionRequest = sessionPickerVM.makeTerminalRequest(for: tmuxSession)
         XCTAssertEqual(sessionRequest.connection.id, connection.id)
-        XCTAssertEqual(sessionRequest.startupAction?.renderStartupCommand(), "tmux attach-session -t 'shell'")
+        XCTAssertEqual(sessionRequest.startupAction?.renderStartupCommand(), "tmux -u attach-session -t 'shell'")
 
         let stubSession = StubSSHSession()
         let terminalVM = PlainTerminalViewModel(
@@ -117,7 +117,7 @@ final class AppFlowIntegrationTests: XCTestCase {
         XCTAssertEqual(terminalVM.state, TerminalConnectionState.terminalOpen)
         XCTAssertNotNil(terminalVM.session)
 
-        let expectedStartup = Array("tmux attach-session -t 'shell'\n".utf8)
+        let expectedStartup = Array("tmux -u attach-session -t 'shell'\n".utf8)
         XCTAssertEqual(stubSession.sentBytes, expectedStartup)
 
         await terminalVM.disconnect()

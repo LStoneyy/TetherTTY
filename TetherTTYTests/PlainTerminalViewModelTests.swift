@@ -24,7 +24,7 @@ final class PlainTerminalViewModelTests: XCTestCase {
 
         await viewModel.connect()
 
-        let expected = Array("tmux attach-session -t 'work'\n".utf8)
+        let expected = Array("tmux -u attach-session -t 'work'\n".utf8)
         XCTAssertEqual(session.sentBytes, expected)
     }
 
@@ -127,7 +127,7 @@ final class PlainTerminalViewModelTests: XCTestCase {
         try? await Task.sleep(nanoseconds: 100_000_000)
         XCTAssertEqual(client.openShellCallCount, 2)
         XCTAssertEqual(viewModel.state, .terminalOpen)
-        XCTAssertEqual(session.sentBytes, Array("tmux attach-session -t 'work'\n".utf8))
+        XCTAssertEqual(session.sentBytes, Array("tmux -u attach-session -t 'work'\n".utf8))
     }
 
     func testBriefForegroundWithinGraceDoesNotReattach() async {
@@ -199,7 +199,7 @@ final class PlainTerminalViewModelTests: XCTestCase {
         try? await Task.sleep(nanoseconds: 100_000_000)
         XCTAssertEqual(client.openShellCallCount, 3)   // 1 initial + 1 failed + 1 successful
         XCTAssertEqual(viewModel.state, .terminalOpen)
-        XCTAssertEqual(session.sentBytes, Array("tmux attach-session -t 'work'\n".utf8))
+        XCTAssertEqual(session.sentBytes, Array("tmux -u attach-session -t 'work'\n".utf8))
     }
 
     func testReattachExhaustsToDisconnected() async {

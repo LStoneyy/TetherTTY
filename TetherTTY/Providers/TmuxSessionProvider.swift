@@ -38,6 +38,13 @@ struct SimulatedTmuxSessionProvider: TmuxSessionProvider {
 #endif
 
 struct RealTmuxSessionProvider: TmuxSessionProvider {
+    /// `-u` makes tmux treat the client as UTF-8 regardless of the remote locale. Without it,
+    /// a non-interactive SSH exec on a server with no UTF-8 `LANG`/`LC_*` (common on minimal
+    /// Linux hosts) makes tmux replace the tab separators below (and any non-ASCII characters
+    /// in session names) with `_`, so `TmuxSessionParser` would find no sessions at all.
+    static let listSessionsCommand =
+        "PATH=\"$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH\" tmux -u list-sessions -F '#{session_name}\t#{session_windows}\t#{session_attached}\t#{session_created}'"
+
     let sshClient: SSHClient
 
     init(sshClient: SSHClient = SwiftNIOSSHClient()) {
@@ -52,7 +59,7 @@ struct RealTmuxSessionProvider: TmuxSessionProvider {
                 username: request.connection.username,
                 password: request.password
             ),
-            command: "PATH=\"$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH\" tmux list-sessions -F '#{session_name}\t#{session_windows}\t#{session_attached}\t#{session_created}'"
+            command: Self.listSessionsCommand
         )
         let sessions = TmuxSessionParser.parse(result.stdout)
         let outcome = SessionDiscoveryClassifier.classify(
