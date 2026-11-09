@@ -113,7 +113,7 @@ Password: (see the Sign-In Information fields)
 Steps:
 1. Launch the app and unlock with Face ID or the device passcode (the app lock uses the device owner authentication; on a device without Face ID the passcode is used).
 2. Tap "+" (Add Connection) to add a connection and enter the host, port, username and password above. Save.
-3. Tap the connection. On first connect the app shows the server's SSH host key fingerprint; tap "Trust" (expected: SHA256:DxIPalOmuDNSu6pw50aoqY9HITxe0ufjakl2LtxWEVk).
+3. Tap the connection. On first connect the app shows the server's SSH host key fingerprint; tap "Trust" (expected: SHA256:DxIPalOmuDNSu6pw50aoqY9HITxe0ufjakl2LtxWEVk=).
 4. The session picker lists the tmux sessions "build" and "logs" under "Tmux Sessions". Tap "build" to attach — you will see a simulated build log. herdr is intentionally not installed, so the app shows a neutral "herdr isn't installed on this host" note.
 5. Optional: send the app to the background and return; the app reconnects and reattaches to the same session automatically.
 
